@@ -240,6 +240,7 @@
     let isRiding = false;
     let isLocked = false;
     let isTheftAlert = false;
+    let lastLockTime = 0;
     let watchId = null;
     let audioCtx = null;
     let alarmInterval = null;
@@ -369,11 +370,14 @@
 
     // --- Motion / Safety ---
     function handleMotion(event) {
-        if (isLocked && !isTheftAlert) {
+        // Theft check (always monitoring if locked)
+        // Add 1.5s arming delay to allow user to settle phone
+        if (isLocked && !isTheftAlert && (Date.now() - lastLockTime > 1500)) {
             const acc = event.accelerationIncludingGravity;
             if (acc) {
                 const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-                if (Math.abs(mag - 9.8) > 3.5) set(ref(db, "bike/theft"), true);
+                // SENSITIVITY: Lowered threshold from 3.5 to 0.8 for "small movement"
+                if (Math.abs(mag - 9.8) > 0.8) set(ref(db, "bike/theft"), true);
             }
         }
         if (!isRiding) return;
@@ -405,10 +409,14 @@
         log("Emergency Alert Sent!");
     }
 
-    // --- Anti-Theft Siren ---
+    // --- Anti-Theft / Siren ---
     onValue(ref(db, "bike/locked"), (s) => {
         isLocked = s.val() === true;
+        if (isLocked) lastLockTime = Date.now();
         document.getElementById("lock-badge").style.display = isLocked ? "block" : "none";
+        if (!isLocked && isTheftAlert) {
+            set(ref(db, "bike/theft"), false);
+        }
     });
 
     onValue(ref(db, "bike/theft"), (s) => {
