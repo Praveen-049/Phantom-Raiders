@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike GPS Tracker</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 80%;
+            max-width: 400px;
+        }
+
+        h1 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .status {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status.inactive {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        .status.active {
+            background: #065f46;
+            color: #34d399;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #334155;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 0.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Bike Tracker</h1>
+        <p>Mount phone and start tracking</p>
+
+        <div id="status" class="status inactive">Tracking: Inactive</div>
+
+        <button id="startBtn">Start Tracking</button>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Lat</div>
+                <div id="lat" class="stat-value">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Lon</div>
+                <div id="lon" class="stat-value">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Speed</div>
+                <div id="speed" class="stat-value">0 <small>km/h</small></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Updates</div>
+                <div id="count" class="stat-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        // Replace with actual firebaseConfig passed in the existing file
+        const firebaseConfig = {
+            apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
+            authDomain: "phantom-raiders.firebaseapp.com",
+            projectId: "phantom-raiders",
+            storageBucket: "phantom-raiders.firebasestorage.app",
+            messagingSenderId: "1055222458613",
+            appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
+            measurementId: "G-3GX5D8RDMW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const bikeRef = ref(db, 'bike');
+
+        let watchId = null;
+        let updateCount = 0;
+
+        const startBtn = document.getElementById('startBtn');
+        const statusDiv = document.getElementById('status');
+        const latVal = document.getElementById('lat');
+        const lonVal = document.getElementById('lon');
+        const speedVal = document.getElementById('speed');
+        const countVal = document.getElementById('count');
+
+        startBtn.addEventListener('click', () => {
+            if (watchId === null) {
+                startTracking();
+            } else {
+                stopTracking();
+            }
+        });
+
+        function startTracking() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
+
+            statusDiv.textContent = 'Tracking: Searching GPS...';
+            statusDiv.classList.replace('inactive', 'active');
+            startBtn.textContent = 'Stop Tracking';
+            startBtn.style.backgroundColor = '#ef4444';
+
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude, speed } = position.coords;
+                    const timestamp = Date.now();
+
+                    // Convert speed from m/s to km/h
+                    const speedKmH = speed ? (speed * 3.6).toFixed(1) : 0;
+
+                    // Update UI
+                    latVal.textContent = latitude.toFixed(6);
+                    lonVal.textContent = longitude.toFixed(6);
+                    speedVal.innerHTML = `${speedKmH} <small>km/h</small>`;
+                    updateCount++;
+                    countVal.textContent = updateCount;
+                    statusDiv.textContent = 'Tracking: Active';
+
+                    // Send to Firebase
+                    set(bikeRef, {
+                        lat: latitude,
+                        lng: longitude,
+                        speed: parseFloat(speedKmH),
+                        timestamp: timestamp
+                    }).catch(err => console.error("Firebase Error:", err));
+                },
+                (error) => {
+                    console.error("GPS Error:", error);
+                    statusDiv.textContent = 'Error: ' + error.message;
+                    statusDiv.classList.replace('active', 'inactive');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function stopTracking() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                statusDiv.textContent = 'Tracking: Inactive';
+                statusDiv.classList.replace('active', 'inactive');
+                startBtn.textContent = 'Start Tracking';
+                startBtn.style.backgroundColor = '#2563eb';
+            }
+        }
+
+        // Keep screen on if supported (Wake Lock API)
+        if ('wakeLock' in navigator) {
+            let wakeLock = null;
+            const requestWakeLock = async () => {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            };
+            document.addEventListener('visibilitychange', async () => {
+                if (wakeLock !== null && document.visibilityState === 'visible') {
+                    await requestWakeLock();
+                }
+            });
+            requestWakeLock();
+        }
+    </script>
+</body>
+
+</html>

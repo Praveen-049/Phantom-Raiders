@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bike Tracking Dashboard</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --accent: #3b82f6;
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--primary);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            flex-grow: 1;
+            z-index: 1;
+        }
+
+        .overlay-container {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            padding: 1.25rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255,255,255,0.5);
+            width: 220px;
+            pointer-events: auto;
+        }
+
+        .card-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-value small {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-left: 0.25rem;
+        }
+
+        #alert-box {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--danger);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.4); }
+            100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        }
+
+        /* Responsive UI */
+        @media (max-width: 640px) {
+            header { padding: 0.75rem 1rem; }
+            .overlay-container { top: 70px; left: 10px; width: calc(100% - 20px); flex-direction: row; flex-wrap: wrap; }
+            .card { width: calc(50% - 15px); padding: 0.75rem; }
+            .card-value { font-size: 1.125rem; }
+            #map { height: calc(100vh - 60px); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>PHANTOM RAIDERS <small style="font-weight: 400; color: var(--text-light); font-size: 0.75rem; margin-left: 10px;">LIVE TRACKER</small></h1>
+        <div style="font-size: 0.875rem; font-weight: 500;">
+            <span class="status-dot pulse"></span> LIVE
+        </div>
+    </header>
+
+    <div id="map"></div>
+
+    <div id="alert-box">
+        ⚠️ BIKE IS MOVING!
+    </div>
+
+    <div class="overlay-container">
+        <div class="card">
+            <div class="card-label">Current Speed</div>
+            <div id="speed" class="card-value">0 <small>km/h</small></div>
+        </div>
+        <div class="card">
+            <div class="card-label">Last Updated</div>
+            <div id="time" class="card-value">--:--</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Travel Path</div>
+            <div id="distance" class="card-value">0 <small>pts</small></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
+            authDomain: "phantom-raiders.firebaseapp.com",
+            projectId: "phantom-raiders",
+            storageBucket: "phantom-raiders.firebasestorage.app",
+            messagingSenderId: "1055222458613",
+            appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
+            measurementId: "G-3GX5D8RDMW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const bikeRef = ref(db, 'bike');
+
+        // Initialize Map
+        const map = L.map('map', {
+            zoomControl: false
+        }).setView([0, 0], 2);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Custom Marker Icon
+        const bikeIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: var(--primary); width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
+        });
+
+        const marker = L.marker([0, 0], { icon: bikeIcon }).addTo(map);
+        
+        // Route History (Polyline)
+        const pathLine = L.polyline([], {
+            color: '#2563eb',
+            weight: 5,
+            opacity: 0.7,
+            lineJoin: 'round'
+        }).addTo(map);
+
+        let firstLoad = true;
+        let routePoints = [];
+
+        // UI Elements
+        const speedEl = document.getElementById('speed');
+        const timeEl = document.getElementById('time');
+        const distanceEl = document.getElementById('distance');
+        const alertBox = document.getElementById('alert-box');
+
+        // Listen for Realtime Updates
+        onValue(bikeRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const { lat, lng, speed, timestamp } = data;
+            const newPos = [lat, lng];
+
+            // Update Marker
+            marker.setLatLng(newPos);
+            
+            // Update Polyline
+            routePoints.push(newPos);
+            pathLine.setLatLngs(routePoints);
+
+            // Update UI
+            speedEl.innerHTML = `${speed.toFixed(1)} <small>km/h</small>`;
+            
+            const date = new Date(timestamp);
+            timeEl.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            distanceEl.innerHTML = `${routePoints.length} <small>pts</small>`;
+
+            // Show alert if moving
+            if (speed > 1) {
+                alertBox.style.display = 'flex';
+                // Hide alert after 5 seconds if speed drops
+                setTimeout(() => { if (speed <= 1) alertBox.style.display = 'none'; }, 5000);
+            } else {
+                alertBox.style.display = 'none';
+            }
+
+            // Auto center map
+            if (firstLoad) {
+                map.setView(newPos, 16);
+                firstLoad = false;
+            } else {
+                map.panTo(newPos);
+            }
+        });
+
+    </script>
+</body>
+</html>
