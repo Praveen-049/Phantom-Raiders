@@ -74,6 +74,12 @@
     </div>
 
     <div id="sync-time">Last update: --:--</div>
+
+    <div id="debug-info" style="font-size: 0.6rem; color: #94a3b8; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; display: none;">
+        <div>Bike: <span id="bike-latlng">0,0</span></div>
+        <div>User: <span id="user-latlng">0,0</span> (±<span id="user-acc">0</span>m)</div>
+    </div>
+    <button onclick="toggleDebug()" style="background:none; border:none; color:#cbd5e1; font-size:0.5rem; cursor:pointer; margin-top:5px;">Show Debug Info</button>
 </div>
 
 <div id="map"></div>
@@ -149,11 +155,25 @@
         }
     }
 
-    // Track Dashboard User's Location
+    window.toggleDebug = function() {
+        const el = document.getElementById("debug-info");
+        el.style.display = el.style.display === "none" ? "block" : "none";
+    }
+
+    // Track Dashboard User's Location with High Accuracy
     navigator.geolocation.watchPosition((pos) => {
         userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        document.getElementById("user-latlng").innerText = userPos.lat.toFixed(4) + "," + userPos.lng.toFixed(4);
+        document.getElementById("user-acc").innerText = Math.round(pos.coords.accuracy);
         updateDistanceUI();
-    }, (err) => console.log("User Geolocation error:", err));
+    }, (err) => {
+        console.log("User Geolocation error:", err);
+        document.getElementById("conn-text").innerText += " | GPS Error: " + err.message;
+    }, {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+    });
 
     // Connection monitoring
     onValue(ref(db, ".info/connected"), (snap) => {
@@ -171,6 +191,7 @@
         if (!d || !d.lat) return;
 
         bikePos = { lat: d.lat, lng: d.lng };
+        document.getElementById("bike-latlng").innerText = d.lat.toFixed(4) + "," + d.lng.toFixed(4);
         const pos = [d.lat, d.lng];
         marker.setLatLng(pos);
 
