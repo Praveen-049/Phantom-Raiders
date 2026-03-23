@@ -173,7 +173,19 @@
         bikePos = { lat: d.lat, lng: d.lng };
         const pos = [d.lat, d.lng];
         marker.setLatLng(pos);
-        route.addLatLng(pos);
+
+        // Filter route jumps (if point is > 2km from last point, ignore for route polyline)
+        const lastLatLng = route.getLatLngs().length > 0 ? route.getLatLngs()[route.getLatLngs().length - 1] : null;
+        let isOutlier = false;
+        if (lastLatLng) {
+            const dist = getDistance(lastLatLng.lat, lastLatLng.lng, d.lat, d.lng);
+            if (dist > 2) isOutlier = true; // 2km jump is suspicious
+            if (dist < 0.005) return; // Ignore if less than 5m move to keep map clean
+        }
+
+        if (!isOutlier) {
+            route.addLatLng(pos);
+        }
 
         // Handle Emergency Status
         const banner = document.getElementById("emergency-banner");

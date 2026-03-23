@@ -281,6 +281,14 @@
             document.getElementById("speed").innerText = Math.round(speed);
             gpsStatusEl.innerText = "GPS: Active Accuracy: " + Math.round(pos.coords.accuracy) + "m";
 
+            // ACCURACY FILTER: Only sync if accuracy is < 60 meters
+            if (pos.coords.accuracy > 60) {
+                gpsStatusEl.style.color = "#ef4444";
+                gpsStatusEl.innerText += " (Poor - Ignoring)";
+                return;
+            }
+            gpsStatusEl.style.color = "#10b981";
+
             updateAddress(lat, lng);
 
             set(ref(db, "bike"), {
