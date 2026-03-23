@@ -196,6 +196,19 @@
     <i class="fas fa-triangle-exclamation"></i> CRASH DETECTED • EMERGENCY ALERT ACTIVE
 </div>
 
+<div id="theft-banner" style="position:fixed; top:0; left:0; width:100%; background:#f97316; color:white; text-align:center; padding:12px; font-weight:800; font-size:1rem; z-index:2001; display:none; box-shadow:0 4px 15px rgba(249, 115, 22, 0.4); animation: slideDown 0.5s ease-out, theft-blink 0.8s infinite;">
+    <i class="fas fa-hand-fist"></i> THEFT ALERT: BIKE IS MOVING!
+    <button onclick="silenceAlarm()" style="background:white; color:#c2410c; border:none; padding:4px 12px; border-radius:6px; margin-left:15px; font-weight:700; cursor:pointer;">STOP ALARM</button>
+</div>
+
+<style>
+    @keyframes theft-blink {
+        0% { background: #f97316; }
+        50% { background: #ea580c; }
+        100% { background: #f97316; }
+    }
+</style>
+
 <div class="glass-panel">
     <div class="header">
         <div class="brand">PHANTOM</div>
@@ -231,6 +244,15 @@
                 <div id="address" class="value">---</div>
             </div>
         </div>
+
+        <!-- Anti-theft Toggle -->
+        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px;">
+            <div class="icon-box" id="lock-icon-box"><i class="fas fa-lock-open"></i></div>
+            <div class="stat-content">
+                <div class="label">Anti-Theft Lock</div>
+                <button id="lock-btn" style="background:var(--primary); border:none; color:white; padding:6px 15px; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; width:100%;">LOCK BIKE</button>
+            </div>
+        </div>
     </div>
 
     <div id="sync-time">Last update: Waiting...</div>
@@ -249,7 +271,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
@@ -336,6 +358,45 @@
         document.getElementById("user-acc").innerText = Math.round(pos.coords.accuracy);
         updateDistanceUI();
     }, null, { enableHighAccuracy: true });
+
+    // Anti-theft Controls
+    const lockBtn = document.getElementById("lock-btn");
+    const lockIconBox = document.getElementById("lock-icon-box");
+    let isLocked = false;
+
+    lockBtn.onclick = () => {
+        const nextState = !isLocked;
+        set(ref(db, "bike/locked"), nextState);
+        if (!nextState) set(ref(db, "bike/theft"), false); // Reset theft if unlocking
+    };
+
+    window.silenceAlarm = () => {
+        set(ref(db, "bike/theft"), false);
+    };
+
+    onValue(ref(db, "bike/locked"), (snap) => {
+        isLocked = snap.val() === true;
+        if (isLocked) {
+            lockBtn.innerText = "UNLOCK BIKE";
+            lockBtn.style.background = "#64748b";
+            lockIconBox.innerHTML = '<i class="fas fa-lock"></i>';
+            lockIconBox.style.color = "#3b82f6";
+        } else {
+            lockBtn.innerText = "LOCK BIKE";
+            lockBtn.style.background = "#3b82f6";
+            lockIconBox.innerHTML = '<i class="fas fa-lock-open"></i>';
+            lockIconBox.style.color = "#94a3b8";
+        }
+    });
+
+    onValue(ref(db, "bike/theft"), (snap) => {
+        const theftBanner = document.getElementById("theft-banner");
+        if (snap.val() === true) {
+            theftBanner.style.display = "block";
+        } else {
+            theftBanner.style.display = "none";
+        }
+    });
 
     onValue(ref(db, "bike"), (snap) => {
         const d = snap.val();

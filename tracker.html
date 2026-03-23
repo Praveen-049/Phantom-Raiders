@@ -189,8 +189,9 @@
             <span class="slider"></span>
         </label>
     </div>
-    <div class="status-indicator">
-        Status: <span id="crash-status" class="status-idle">Idle</span>
+    <div style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
+        Status: <span id="crash-detection-status" style="font-weight: 700; color: #10b981;">Idle</span> | 
+        Lock: <span id="lock-status" style="font-weight: 700; color: #64748b;">Unlocked</span>
     </div>
     <div class="status-indicator" style="font-size: 0.7rem;">
         Last: <span id="last-crash-time">Never</span>
@@ -340,22 +341,81 @@
     let sustainedTiltStart = null;
     let sensorInterval = null;
 
+    // --- ANTI-THEFT LOGIC ---
+    let isLocked = false;
+    let isTheftAlert = false;
+    let audioContext = null;
+    let oscillator = null;
+
+    // Listen for lock/unlock state from Firebase
+    onValue(ref(db, "bike/locked"), (snapshot) => {
+        isLocked = snapshot.val() === true;
+        document.getElementById("lock-status").innerText = isLocked ? "Locked" : "Unlocked";
+        document.getElementById("lock-status").style.color = isLocked ? "#ef4444" : "#64748b";
+        if (!isLocked) {
+            // If unlocked, ensure theft alert is cleared and siren stopped
+            if (isTheftAlert) {
+                set(ref(db, "bike/theft"), false);
+            }
+            stopSiren();
+        }
+    });
+
+    // Listen for theft alert from Firebase
+    onValue(ref(db, "bike/theft"), (snapshot) => {
+        isTheftAlert = snapshot.val() === true;
+        if (isTheftAlert) {
+            startSiren();
+            logError("THEFT DETECTED! Siren activated.");
+        } else {
+            stopSiren();
+        }
+    });
+
+    function startSiren() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (alarmInterval) return;
+
+        alarmInterval = setInterval(() => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.5);
+        }, 500);
+    }
+
+    function stopSiren() {
+        if (alarmInterval) {
+            clearInterval(alarmInterval);
+            alarmInterval = null;
+        }
+    }
+
     window.toggleCrashDetection = async function() {
         const toggle = document.getElementById("crash-toggle");
         if (toggle.checked) {
             const permission = await initCrashDetection();
             if (permission) {
                 crashDetectionEnabled = true;
-                document.getElementById("crash-status").innerText = "Active";
-                document.getElementById("crash-status").className = "status-active";
+                document.getElementById("crash-detection-status").innerText = "Active";
+                document.getElementById("crash-detection-status").className = "status-active";
             } else {
                 toggle.checked = false;
                 logError("Sensor permissions denied.");
             }
         } else {
             crashDetectionEnabled = false;
-            document.getElementById("crash-status").innerText = "Idle";
-            document.getElementById("crash-status").className = "status-idle";
+            document.getElementById("crash-detection-status").innerText = "Idle";
+            document.getElementById("crash-detection-status").className = "status-idle";
             stopSensors();
         }
     };
@@ -393,6 +453,19 @@
     let currentOrientation = null;
 
     function handleMotion(event) {
+        const acc = event.accelerationIncludingGravity;
+        if (!acc) return;
+        
+        // --- ANTI-THEFT MOTION CHECK ---
+        if (isLocked && !isTheftAlert) {
+            const mag = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
+            // If movement is detected (> 2.5 m/s^2 change from gravity baseline)
+            // gravity is ~9.8, so we check for significant spikes
+            if (Math.abs(mag - 9.8) > 2.5) {
+                set(ref(db, "bike/theft"), true);
+            }
+        }
+
         if (!crashDetectionEnabled) return;
         currentMotion = event.accelerationIncludingGravity;
     }
