@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phantom Tracker | Ride Mode</title>
+    <title>Phantom Tracker | Rider Login</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -15,9 +15,10 @@
             --primary: #3b82f6;
             --danger: #ef4444;
             --success: #10b981;
+            --warning: #f59e0b;
             --bg: #0b1220;
-            --glass: rgba(22, 32, 51, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(22, 32, 51, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.12);
         }
 
         body { 
@@ -32,125 +33,117 @@
             height: 100vh;
             text-align: center;
             overflow: hidden;
-            transition: background 0.5s ease;
         }
 
-        /* Glass Container */
         .container {
             width: 85%;
             max-width: 400px;
             background: var(--glass);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             padding: 40px 25px;
-            border-radius: 30px;
+            border-radius: 35px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 25px;
+            transition: all 0.5s ease;
         }
 
-        .header {
-            margin-bottom: 10px;
-        }
+        /* Views */
+        #login-view { display: flex; flex-direction: column; gap: 20px; }
+        #ride-view { display: none; flex-direction: column; gap: 20px; }
+
         .brand {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 800;
-            letter-spacing: 2px;
-            background: linear-gradient(45deg, #fff, #94a3b8);
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #fff 0%, #3b82f6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Large Start Button */
-        #start-ride-btn {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            background: var(--primary);
-            border: 8px solid rgba(59, 130, 246, 0.2);
+        input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 15px;
+            border-radius: 15px;
             color: white;
-            font-family: 'Outfit';
-            font-weight: 800;
-            font-size: 1.2rem;
+            font-family: inherit;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+
+        .btn {
+            padding: 15px;
+            border-radius: 15px;
+            border: none;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin: 20px auto;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-transform: uppercase;
+            gap: 10px;
         }
-        #start-ride-btn:active { transform: scale(0.9); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-park { background: var(--warning); color: #000; margin-top: 10px; }
+
+        /* Start Ride Button */
+        #start-ride-btn {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 6px solid rgba(59, 130, 246, 0.2);
+            color: white;
+            font-weight: 800;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+            transition: 0.3s;
+        }
         #start-ride-btn.riding {
             background: var(--danger);
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
             border-color: rgba(239, 68, 68, 0.2);
         }
 
-        /* Stats Grid (Visible when riding) */
         .stats-grid {
-            display: none;
+            display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
+            gap: 15px;
         }
         .stat-box {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
             border-radius: 15px;
             border: 1px solid var(--glass-border);
         }
-        .label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
-        .value { font-size: 1.4rem; font-weight: 700; color: white; }
+        .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .value { font-size: 1.2rem; font-weight: 700; }
 
-        /* Status Badges */
-        .status-area {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 10px;
-        }
-        .badge {
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 5px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .badge-gps { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-        .badge-safety { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-        .badge-locked { background: rgba(249, 115, 22, 0.2); color: #f97316; display: none; }
-
-        /* Crash Overlay */
         #crash-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--danger);
-            z-index: 5000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-        }
-        .countdown { font-size: 6rem; font-weight: 900; margin: 20px 0; }
-        .cancel-btn {
-            background: white; color: var(--danger); border: none;
-            padding: 15px 40px; border-radius: 12px; font-weight: 800; cursor: pointer;
+            background: var(--danger); z-index: 5000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            transition: 0.3s;
         }
 
         #log-panel {
-            position: fixed;
-            bottom: 10px; width: 90%;
-            font-size: 0.6rem; color: #475569;
-            max-height: 40px; overflow: hidden;
+            position: fixed; bottom: 15px; font-size: 0.6rem; color: #475569;
         }
     </style>
 </head>
@@ -158,52 +151,63 @@
 
 <div id="crash-overlay">
     <i class="fas fa-triangle-exclamation fa-4x"></i>
-    <h1 style="font-size: 2.5rem; margin: 10px 0;">CRASH DETECTED!</h1>
-    <div class="countdown" id="countdown">10</div>
-    <p style="margin-bottom: 30px;">Emergency alert will be sent in <span id="secs">10</span> seconds.</p>
-    <div style="display: flex; gap: 15px;">
-        <button class="cancel-btn" onclick="cancelCrashAlert()">I AM OK (CANCEL)</button>
-        <a href="tel:112" style="text-decoration: none;">
-            <button style="background: var(--bg); color: white; border: 2px solid white; padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer;">
-                <i class="fas fa-phone"></i> CALL SOS
-            </button>
-        </a>
+    <h1 style="font-size: 2.5rem; margin: 15px 0;">CRASH DETECTED</h1>
+    <div id="countdown" style="font-size: 5rem; font-weight: 800;">10</div>
+    <div style="display: flex; gap: 15px; margin-top: 30px;">
+        <button class="btn" style="background:white; color:var(--danger);" onclick="cancelCrashAlert()">I'M OK</button>
+        <a href="tel:112" style="text-decoration:none;"><button class="btn" style="background:#000; color:white;"><i class="fas fa-phone"></i> SOS</button></a>
     </div>
 </div>
 
 <div class="container">
-    <div class="header">
+    <!-- LOGIN VIEW -->
+    <div id="login-view">
         <div class="brand">PHANTOM</div>
-        <p style="font-size: 0.8rem; color: #94a3b8; margin: 5px 0;">Premium Ride Intelligence</p>
+        <p style="color:#94a3b8; margin:0;">Enter Rider Profile</p>
+        <input type="text" id="rider-name" placeholder="Rider Name" value="Raider 1">
+        <button class="btn btn-primary" onclick="doLogin()">PROCEED <i class="fas fa-arrow-right"></i></button>
     </div>
 
-    <button id="start-ride-btn" onclick="toggleRide()">START RIDE</button>
+    <!-- RIDE VIEW -->
+    <div id="ride-view">
+        <div class="header">
+            <div id="display-rider" style="font-weight:600; font-size:1.1rem; color:var(--primary);">---</div>
+            <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">Premium Ride Mode</div>
+        </div>
 
-    <div id="stats-view" class="stats-grid">
-        <div class="stat-box">
-            <div class="label">Speed</div>
-            <div id="speed" class="value">0</div>
-            <div style="font-size: 0.6rem; color: #64748b;">km/h</div>
+        <div id="start-ride-btn" onclick="toggleRide()">
+            <i class="fas fa-play fa-2x" id="play-icon"></i>
+            <span id="btn-text" style="font-size:0.8rem; margin-top:10px;">START RIDE</span>
         </div>
-        <div class="stat-box">
-            <div class="label">Accuracy</div>
-            <div id="accuracy" class="value">--</div>
-            <div style="font-size: 0.6rem; color: #64748b;">meters</div>
-        </div>
-        <div class="stat-box" style="grid-column: span 2;">
-            <div class="label">Current Location</div>
-            <div id="address" class="value" style="font-size: 0.9rem; font-weight: 400; color: #3b82f6;">---</div>
-        </div>
-    </div>
 
-    <div class="status-area">
-        <div class="badge badge-gps" id="gps-badge"><i class="fas fa-satellite"></i> GPS SEARCHING</div>
-        <div class="badge badge-safety" id="safety-badge" style="display:none;"><i class="fas fa-shield-halved"></i> SAFETY ON</div>
-        <div id="lock-badge" class="badge badge-locked"><i class="fas fa-lock"></i> SECURED</div>
+        <div id="live-stats" style="display:none;">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="label">Speed</div>
+                    <div id="speed" class="value">0</div>
+                    <div style="font-size: 0.6rem; color: #64748b;">km/h</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Accuracy</div>
+                    <div id="accuracy" class="value">--</div>
+                    <div style="font-size: 0.6rem; color: #64748b;">m</div>
+                </div>
+                <div class="stat-box" style="grid-column: span 2;">
+                    <div class="label">Location</div>
+                    <div id="address" class="value" style="font-size: 0.8rem; font-weight: 400; color: var(--primary);">---</div>
+                </div>
+            </div>
+            <button class="btn btn-park" onclick="parkBike()"><i class="fab fa-whatsapp"></i> PARK & NOTIFY</button>
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:10px;">
+            <div id="gps-badge" style="background:rgba(59,130,246,0.1); color:#3b82f6; padding:4px 10px; border-radius:20px; font-size:0.6rem; font-weight:700;">GPS SEARCHING</div>
+            <div id="lock-badge" style="background:rgba(249,115,22,0.1); color:#f97316; padding:4px 10px; border-radius:20px; font-size:0.6rem; font-weight:700; display:none;">LOCKED</div>
+        </div>
     </div>
 </div>
 
-<div id="log-panel">System Initialized. Waiting for rider...</div>
+<div id="log-panel">System Standby</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -224,15 +228,29 @@
     const db = getDatabase(app);
 
     // --- State ---
+    let riderName = "";
     let isRiding = false;
     let isLocked = false;
     let isTheftAlert = false;
     let watchId = null;
-    let alarmInterval = null;
     let audioCtx = null;
+    let alarmInterval = null;
     let crashTimer = null;
+    let currentCoords = null;
+    let currentAddress = "---";
 
-    // --- Core Logic ---
+    // --- Login ---
+    window.doLogin = () => {
+        riderName = document.getElementById("rider-name").value.trim() || "Raider";
+        document.getElementById("display-rider").innerText = "Rider: " + riderName;
+        document.getElementById("login-view").style.display = "none";
+        document.getElementById("ride-view").style.display = "flex";
+        set(ref(db, "bike/rider"), riderName);
+        set(ref(db, "bike/isParked"), false);
+        log("Logged in as " + riderName);
+    };
+
+    // --- Ride Control ---
     window.toggleRide = async () => {
         if (!isRiding) {
             await startRide();
@@ -243,205 +261,162 @@
 
     async function startRide() {
         try {
-            // 1. Permissions (iOS requires user gesture, which this click is)
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                const permission = await DeviceMotionEvent.requestPermission();
-                if (permission !== 'granted') {
-                    alert("Motion permission required for crash detection.");
-                    return;
-                }
+                const p = await DeviceMotionEvent.requestPermission();
+                if (p !== 'granted') return alert("Permission denied.");
             }
-
-            // 2. UI Updates
             isRiding = true;
-            const btn = document.getElementById("start-ride-btn");
-            btn.innerText = "STOP RIDE";
-            btn.classList.add("riding");
-            document.getElementById("stats-view").style.display = "grid";
-            document.getElementById("safety-badge").style.display = "flex";
-            log("Ride Started. Crash detection active.");
-
-            // 3. Start GPS
-            watchId = navigator.geolocation.watchPosition(updatePosition, handleGPSError, {
-                enableHighAccuracy: true,
-                maximumAge: 0
-            });
-
-            // 4. Start Crash Detection
+            updateUI(true);
+            set(ref(db, "bike/isRiding"), true);
+            set(ref(db, "bike/isParked"), false);
+            watchId = navigator.geolocation.watchPosition(updatePosition, (e) => log(e.message), { enableHighAccuracy:true });
             window.addEventListener('devicemotion', handleMotion);
-        } catch (e) {
-            log("Error starting ride: " + e.message);
-        }
+            log("Ride Started");
+        } catch (e) { log(e.message); }
     }
 
     function stopRide() {
         isRiding = false;
-        const btn = document.getElementById("start-ride-btn");
-        btn.innerText = "START RIDE";
-        btn.classList.remove("riding");
-        document.getElementById("stats-view").style.display = "none";
-        document.getElementById("safety-badge").style.display = "none";
-        
+        updateUI(false);
+        set(ref(db, "bike/speed"), 0);
+        set(ref(db, "bike/isRiding"), false);
         if (watchId) navigator.geolocation.clearWatch(watchId);
         window.removeEventListener('devicemotion', handleMotion);
-        
-        // Reset Firebase speed but keep last location
-        set(ref(db, "bike/speed"), 0);
-        log("Ride Stopped.");
+        log("Ride Ended");
     }
 
-    // --- GPS Logic ---
-    function updatePosition(pos) {
-        if (!isRiding) return;
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const speed = pos.coords.speed ? pos.coords.speed * 3.6 : 0;
-        const accuracy = pos.coords.accuracy;
-
-        document.getElementById("speed").innerText = Math.round(speed);
-        document.getElementById("accuracy").innerText = Math.round(accuracy);
-        document.getElementById("gps-badge").innerHTML = `<i class="fas fa-satellite"></i> GPS ACTIVE (${Math.round(accuracy)}m)`;
+    window.parkBike = () => {
+        stopRide();
+        set(ref(db, "bike/isParked"), true);
         
-        if (accuracy < 80) {
-            set(ref(db, "bike"), { 
-                lat, lng, speed, 
-                time: Date.now(), 
-                accuracy,
-                isRiding: true
-            });
-            updateAddress(lat, lng);
+        // WhatsApp Integration
+        const lat = currentCoords ? currentCoords.lat : 0;
+        const lng = currentCoords ? currentCoords.lng : 0;
+        const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        const msg = `📍 BIKE PARKED\nRider: ${riderName}\nLocation: ${currentAddress}\nMaps: ${mapUrl}`;
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        
+        window.open(waUrl, '_blank');
+        log("Parking notification sent.");
+    };
+
+    function updateUI(riding) {
+        const btn = document.getElementById("start-ride-btn");
+        const icon = document.getElementById("play-icon");
+        const text = document.getElementById("btn-text");
+        const stats = document.getElementById("live-stats");
+
+        if (riding) {
+            btn.classList.add("riding");
+            icon.className = "fas fa-stop fa-2x";
+            text.innerText = "END RIDE";
+            stats.style.display = "block";
+        } else {
+            btn.classList.remove("riding");
+            icon.className = "fas fa-play fa-2x";
+            text.innerText = "START RIDE";
+            stats.style.display = "none";
         }
     }
 
-    async function updateAddress(lat, lng) {
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-            const data = await res.json();
-            let addr = "Location Found";
-            if (data.address) {
-                const parts = [
-                    data.address.road || data.address.pedestrian,
-                    data.address.suburb || data.address.neighbourhood,
-                    data.address.city || data.address.town
-                ].filter(Boolean);
-                addr = parts.join(", ");
-            }
-            document.getElementById("address").innerText = addr;
-            set(ref(db, "bike/address"), addr);
-        } catch (e) {}
+    // --- Tracking Logic ---
+    function updatePosition(pos) {
+        if (!isRiding) return;
+        const { latitude: lat, longitude: lng, speed, accuracy } = pos.coords;
+        currentCoords = { lat, lng };
+        const s = speed ? speed * 3.6 : 0;
+        
+        document.getElementById("speed").innerText = Math.round(s);
+        document.getElementById("accuracy").innerText = Math.round(accuracy);
+        document.getElementById("gps-badge").innerText = `GPS ACTIVE (${Math.round(accuracy)}m)`;
+        
+        if (accuracy < 100) {
+            set(ref(db, "bike/lat"), lat);
+            set(ref(db, "bike/lng"), lng);
+            set(ref(db, "bike/speed"), s);
+            set(ref(db, "bike/time"), Date.now());
+            set(ref(db, "bike/accuracy"), accuracy);
+            fetchAddress(lat, lng);
+        }
     }
 
-    // --- Motion / Crash Logic ---
+    async function fetchAddress(lat, lng) {
+        try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const d = await r.json();
+            currentAddress = d.display_name.split(',').slice(0,3).join(',');
+            document.getElementById("address").innerText = currentAddress;
+            set(ref(db, "bike/address"), currentAddress);
+        } catch(e) {}
+    }
+
+    // --- Motion / Safety ---
     function handleMotion(event) {
-        // Theft check (always monitoring if locked)
         if (isLocked && !isTheftAlert) {
             const acc = event.accelerationIncludingGravity;
             if (acc) {
                 const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-                if (Math.abs(mag - 9.8) > 3.0) set(ref(db, "bike/theft"), true);
+                if (Math.abs(mag - 9.8) > 3.5) set(ref(db, "bike/theft"), true);
             }
         }
-
         if (!isRiding) return;
-
-        // Crash Detection (Linear acceleration)
         const acc = event.acceleration;
         if (acc && acc.x !== null) {
-            const crashMag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-            if (crashMag > 22) { // Threshold ~2.2G
-                triggerCrashAlert();
-            }
+            const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
+            if (mag > 25) triggerCrashAlert();
         }
     }
 
     function triggerCrashAlert() {
         if (crashTimer) return;
         document.getElementById("crash-overlay").style.display = "flex";
-        let count = 10;
-        document.getElementById("countdown").innerText = count;
-        document.getElementById("secs").innerText = count;
-        
+        let c = 10;
         crashTimer = setInterval(() => {
-            count--;
-            document.getElementById("countdown").innerText = count;
-            document.getElementById("secs").innerText = count;
-            if (count <= 0) {
-                sendEmergency();
-                cancelCrashAlert();
-            }
+            c--;
+            document.getElementById("countdown").innerText = c;
+            if (c <= 0) { sendEmergency(); cancelCrashAlert(); }
         }, 1000);
     }
 
     window.cancelCrashAlert = () => {
-        clearInterval(crashTimer);
-        crashTimer = null;
+        clearInterval(crashTimer); crashTimer = null;
         document.getElementById("crash-overlay").style.display = "none";
     };
 
     function sendEmergency() {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            set(ref(db, "bike/emergency"), true);
-            set(ref(db, "bike/crash"), {
-                time: Date.now(),
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude
-            });
-            alert("EMERGENCY SIGNAL SENT!");
-        });
+        set(ref(db, "bike/emergency"), true);
+        log("Emergency Alert Sent!");
     }
 
-    // --- Anti-Theft / Siren ---
-    onValue(ref(db, "bike/locked"), (snap) => {
-        isLocked = snap.val() === true;
-        document.getElementById("lock-badge").style.display = isLocked ? "flex" : "none";
-        if (!isLocked && isTheftAlert) {
-            set(ref(db, "bike/theft"), false);
-        }
+    // --- Anti-Theft Siren ---
+    onValue(ref(db, "bike/locked"), (s) => {
+        isLocked = s.val() === true;
+        document.getElementById("lock-badge").style.display = isLocked ? "block" : "none";
     });
 
-    onValue(ref(db, "bike/theft"), (snap) => {
-        isTheftAlert = snap.val() === true;
-        if (isTheftAlert) {
-            startSiren();
-            document.body.style.background = "#450a0a";
-        } else {
-            stopSiren();
-            document.body.style.background = "var(--bg)";
-        }
+    onValue(ref(db, "bike/theft"), (s) => {
+        isTheftAlert = s.val() === true;
+        if (isTheftAlert) { startSiren(); document.body.style.background = "#450a0a"; }
+        else { stopSiren(); document.body.style.background = "var(--bg)"; }
     });
 
     function startSiren() {
         if (alarmInterval) return;
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioCtx) audioCtx = new AudioContext();
         alarmInterval = setInterval(() => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.4);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.4);
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(800 + Math.sin(audioCtx.currentTime*10)*200, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + 0.4);
         }, 500);
     }
+    function stopSiren() { clearInterval(alarmInterval); alarmInterval = null; }
 
-    function stopSiren() {
-        if (alarmInterval) {
-            clearInterval(alarmInterval);
-            alarmInterval = null;
-        }
-    }
-
-    // --- Helpers ---
-    function log(msg) {
-        document.getElementById("log-panel").innerText = msg;
-    }
-    function handleGPSError(err) {
-        log("GPS Error: " + err.message);
-    }
+    function log(m) { document.getElementById("log-panel").innerText = m; }
 </script>
 </body>
 </html>

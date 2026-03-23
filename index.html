@@ -226,21 +226,30 @@
     </div>
 
     <div class="stat-grid">
-        <!-- Speed -->
-        <div class="stat-item">
-            <div class="icon-box"><i class="fas fa-gauge-high"></i></div>
+        <!-- Status Info -->
+        <div class="stat-item" style="border-bottom:1px solid var(--glass-border); padding-bottom:15px; margin-bottom:10px;">
+            <div id="status-pulse" class="live-pulse"></div>
             <div class="stat-content">
-                <div class="label">Speed</div>
-                <div id="speed" class="value">0 km/h</div>
+                <div class="label" id="rider-label">System Active</div>
+                <div id="ride-status" class="value" style="color:var(--success);">LIVE TRACKING</div>
             </div>
         </div>
 
-        <!-- Distance -->
-        <div class="stat-item" id="dist-container">
-            <div class="icon-box"><i class="fas fa-route"></i></div>
-            <div class="stat-content">
-                <div class="label">Distance from You</div>
-                <div id="distance" class="value">---</div>
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="icon-box"><i class="fas fa-gauge-high"></i></div>
+                <div class="stat-content">
+                    <div class="label">Speed</div>
+                    <div id="speed" class="value">0 <span style="font-size:0.7rem; font-weight:400;">km/h</span></div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="icon-box"><i class="fas fa-arrows-up-down-left-right"></i></div>
+                <div class="stat-content">
+                    <div class="label">Distance</div>
+                    <div id="dist-ui" class="value">---</div>
+                </div>
             </div>
         </div>
 
@@ -321,7 +330,7 @@
     const route = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.6 }).addTo(map);
 
     const speedEl = document.getElementById("speed");
-    const distanceEl = document.getElementById("distance");
+    const distanceEl = document.getElementById("dist-ui"); // Changed ID
     const timeEl = document.getElementById("sync-time");
 
     let firstLoad = true;
@@ -343,10 +352,10 @@
     function updateDistanceUI() {
         if (bikePos && userPos) {
             if (userAccuracy > 500) {
-                document.getElementById("dist-container").style.display = "none";
+                document.getElementById("dist-ui").closest(".stat-item").style.display = "none"; // Adjusted to new structure
                 return;
             }
-            document.getElementById("dist-container").style.display = "flex";
+            document.getElementById("dist-ui").closest(".stat-item").style.display = "flex"; // Adjusted to new structure
 
             const dist = getDistance(userPos.lat, userPos.lng, bikePos.lat, bikePos.lng);
             distanceEl.innerText = dist < 1 ? Math.round(dist * 1000) + " m" : dist.toFixed(2) + " km";
@@ -460,6 +469,30 @@
     onValue(ref(db, "bike"), (snap) => {
         const d = snap.val();
         if (!d || !d.lat) return;
+
+        // Update Rider & Status
+        const riderLabel = document.getElementById("rider-label");
+        const rideStatus = document.getElementById("ride-status");
+        const pulse = document.getElementById("status-pulse");
+
+        if (d.rider) riderLabel.innerText = "Rider: " + d.rider;
+
+        if (d.isParked) {
+            rideStatus.innerText = "PARKED 🅿️";
+            rideStatus.style.color = "var(--warning)";
+            pulse.style.background = "var(--warning)";
+            pulse.style.animation = "none";
+        } else if (d.isRiding) {
+            rideStatus.innerText = "LIVE TRACKING";
+            rideStatus.style.color = "var(--success)";
+            pulse.style.background = "var(--success)";
+            pulse.style.animation = "pulse 2s infinite";
+        } else {
+            rideStatus.innerText = "IDLE";
+            rideStatus.style.color = "#94a3b8";
+            pulse.style.background = "#94a3b8";
+            pulse.style.animation = "none";
+        }
 
         bikePos = { lat: d.lat, lng: d.lng };
         document.getElementById("bike-latlng").innerText = d.lat.toFixed(4) + "," + d.lng.toFixed(4);
