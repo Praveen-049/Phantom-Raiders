@@ -1,306 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bike GPS Tracker</title>
+    <title>Bike Tracker - Running</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
+            --bg: #0b1220;
+            --card: #162033;
+            --box: #0f1a2e;
+            --success: #10b981;
+            --danger: #ef4444;
         }
-
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: white;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             height: 100vh;
             margin: 0;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 16px;
             text-align: center;
+            width: 300px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-
-        .container {
-            background-color: var(--card);
-            padding: 2rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            width: 80%;
-            max-width: 400px;
-        }
-
-        h1 {
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
-        }
-
-        p {
-            color: #94a3b8;
-            margin-bottom: 2rem;
-        }
-
-        .status {
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 2rem;
+        h2 { margin-top: 0; font-weight: 800; color: #3b82f6; }
+        .status-box {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
         }
-
-        .status.inactive {
-            background: #334155;
-            color: #94a3b8;
-        }
-
-        .status.active {
-            background: #065f46;
-            color: #34d399;
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 0.75rem;
-            font-size: 1.125rem;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        button:disabled {
-            background-color: #334155;
-            cursor: not-allowed;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 2rem;
+        .connected { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .disconnected { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        
+        .box {
+            background: var(--box);
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 8px;
             text-align: left;
+            display: flex;
+            justify-content: space-between;
         }
-
-        .stat-box {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 1rem;
-            border-radius: 0.75rem;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-top: 0.25rem;
+        .label { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
+        .value { font-weight: 700; color: white; }
+        #error-log {
+            margin-top: 15px;
+            font-size: 0.7rem;
+            color: var(--danger);
+            max-height: 60px;
+            overflow-y: auto;
+            text-align: left;
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Bike Tracker</h1>
-        <p>Mount phone and start tracking</p>
 
-        <div id="status" class="status inactive">Tracking: Inactive</div>
-        <div id="connection" style="font-size: 0.75rem; margin-bottom: 1rem; color: #94a3b8;">Firebase: Connecting...
-        </div>
+<div class="card">
+    <h2>BIKE TRACKER</h2>
+    <div id="connection" class="status-box disconnected">Firebase: Disconnected</div>
+    <div id="gps-status" style="font-size: 0.8rem; margin-bottom: 10px; color: #94a3b8;">GPS: Waiting...</div>
 
-        <button id="startBtn">Start Tracking</button>
-
-        <div id="error-log"
-            style="margin-top: 1rem; font-size: 0.75rem; color: #ef4444; text-align: left; max-height: 100px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px; display: none;">
-        </div>
-
-        <div class="stats">
-            <div class="stat-box">
-                <div class="stat-label">Lat</div>
-                <div id="lat" class="stat-value">-</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Lon</div>
-                <div id="lon" class="stat-value">-</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Speed</div>
-                <div id="speed" class="stat-value">0 <small>km/h</small></div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Updates</div>
-                <div id="count" class="stat-value">0</div>
-            </div>
-        </div>
+    <div class="box">
+        <span class="label">Latitude</span>
+        <span id="lat" class="value">0.000000</span>
+    </div>
+    <div class="box">
+        <span class="label">Longitude</span>
+        <span id="lng" class="value">0.000000</span>
+    </div>
+    <div class="box">
+        <span class="label">Speed</span>
+        <span class="value"><span id="speed">0</span> <small>km/h</small></span>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    <div id="error-log"></div>
+</div>
 
-        // Replace with actual firebaseConfig passed in the existing file
-        const firebaseConfig = {
-            apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
-            authDomain: "phantom-raiders.firebaseapp.com",
-            projectId: "phantom-raiders",
-            storageBucket: "phantom-raiders.firebasestorage.app",
-            messagingSenderId: "1055222458613",
-            appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
-            measurementId: "G-3GX5D8RDMW",
-            databaseURL: "https://phantom-raiders-default-rtdb.firebaseio.com"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-        let app, db, bikeRef;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-            bikeRef = ref(db, 'bike');
-        } catch (err) {
-            logError("Firebase Init Failed: " + err.message);
-        }
+    const firebaseConfig = {
+        apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
+        authDomain: "phantom-raiders.firebaseapp.com",
+        // Using the exact URL identified from your console link
+        databaseURL: "https://phantom-raiders-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "phantom-raiders",
+        storageBucket: "phantom-raiders.firebasestorage.app",
+        messagingSenderId: "1055222458613",
+        appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
+        measurementId: "G-3GX5D8RDMW"
+    };
 
-        let watchId = null;
-        let updateCount = 0;
+    const connectionEl = document.getElementById("connection");
+    const gpsStatusEl = document.getElementById("gps-status");
+    const errorLogEl = document.getElementById("error-log");
 
-        const startBtn = document.getElementById('startBtn');
-        const statusDiv = document.getElementById('status');
-        const connectionDiv = document.getElementById('connection');
-        const errorLog = document.getElementById('error-log');
-        const latVal = document.getElementById('lat');
-        const lonVal = document.getElementById('lon');
-        const speedVal = document.getElementById('speed');
-        const countVal = document.getElementById('count');
+    function logError(msg) {
+        const div = document.createElement("div");
+        div.textContent = msg;
+        errorLogEl.appendChild(div);
+    }
 
-        function logError(msg) {
-            errorLog.style.display = 'block';
-            const entry = document.createElement('div');
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            errorLog.prepend(entry);
-        }
-
-        // Monitor Firebase Connection
-        const connectedRef = ref(db, ".info/connected");
-        onValue(connectedRef, (snap) => {
+    try {
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        // Real connection monitoring
+        onValue(ref(db, ".info/connected"), (snap) => {
             if (snap.val() === true) {
-                connectionDiv.textContent = "Firebase: Connected ✓";
-                connectionDiv.style.color = "#34d399";
+                connectionEl.innerText = "Firebase: Connected ✓";
+                connectionEl.className = "status-box connected";
             } else {
-                connectionDiv.textContent = "Firebase: Disconnected ✗";
-                connectionDiv.style.color = "#ef4444";
+                connectionEl.innerText = "Firebase: Disconnected ✗";
+                connectionEl.className = "status-box disconnected";
             }
         });
 
-        startBtn.addEventListener('click', () => {
-            if (watchId === null) {
-                startTracking();
-            } else {
-                stopTracking();
-            }
+        navigator.geolocation.watchPosition((pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const speed = pos.coords.speed ? pos.coords.speed * 3.6 : 0;
+
+            document.getElementById("lat").innerText = lat.toFixed(6);
+            document.getElementById("lng").innerText = lng.toFixed(6);
+            document.getElementById("speed").innerText = Math.round(speed);
+            gpsStatusEl.innerText = "GPS: Active Accuracy: " + Math.round(pos.coords.accuracy) + "m";
+
+            set(ref(db, "bike"), {
+                lat: lat,
+                lng: lng,
+                speed: speed,
+                time: Date.now()
+            }).catch(e => logError("Sync Error: " + e.message));
+
+        }, (err) => {
+            gpsStatusEl.innerText = "GPS Error: " + err.message;
+            logError("GPS: " + err.message);
+        }, {
+            enableHighAccuracy: true,
+            maximumAge: 0
         });
 
-        function startTracking() {
-            if (!window.isSecureContext) {
-                logError("Insecure Context: Geolocation requires HTTPS or localhost.");
-                alert("Tracking requires a secure (HTTPS) connection.");
-                return;
-            }
+    } catch (e) {
+        logError("Init Error: " + e.message);
+    }
 
-            if (!navigator.geolocation) {
-                logError("Geolocation not supported by browser.");
-                alert('Geolocation is not supported by your browser');
-                return;
-            }
+</script>
 
-            statusDiv.textContent = 'Tracking: Searching GPS...';
-            statusDiv.classList.replace('inactive', 'active');
-            startBtn.textContent = 'Stop Tracking';
-            startBtn.style.backgroundColor = '#ef4444';
-
-            watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const { latitude, longitude, speed } = position.coords;
-                    const timestamp = Date.now();
-
-                    // Convert speed from m/s to km/h
-                    const speedKmH = speed ? (speed * 3.6).toFixed(1) : 0;
-
-                    // Update UI
-                    latVal.textContent = latitude.toFixed(6);
-                    lonVal.textContent = longitude.toFixed(6);
-                    speedVal.innerHTML = `${speedKmH} <small>km/h</small>`;
-                    updateCount++;
-                    countVal.textContent = updateCount;
-                    statusDiv.textContent = 'Tracking: Active';
-
-                    // Send to Firebase
-                    set(bikeRef, {
-                        lat: latitude,
-                        lng: longitude,
-                        speed: parseFloat(speedKmH),
-                        timestamp: timestamp
-                    }).then(() => {
-                        console.log("Data sent to Firebase");
-                    }).catch(err => {
-                        logError("Firebase Set Error: " + err.message);
-                        console.error("Firebase Error:", err);
-                    });
-                },
-                (error) => {
-                    console.error("GPS Error:", error);
-                    statusDiv.textContent = 'Error: ' + error.message;
-                    statusDiv.classList.replace('active', 'inactive');
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                }
-            );
-        }
-
-        function stopTracking() {
-            if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-                statusDiv.textContent = 'Tracking: Inactive';
-                statusDiv.classList.replace('active', 'inactive');
-                startBtn.textContent = 'Start Tracking';
-                startBtn.style.backgroundColor = '#2563eb';
-            }
-        }
-
-        // Keep screen on if supported (Wake Lock API)
-        if ('wakeLock' in navigator) {
-            let wakeLock = null;
-            const requestWakeLock = async () => {
-                try {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                } catch (err) {
-                    console.error(`${err.name}, ${err.message}`);
-                }
-            };
-            document.addEventListener('visibilitychange', async () => {
-                if (wakeLock !== null && document.visibilityState === 'visible') {
-                    await requestWakeLock();
-                }
-            });
-            requestWakeLock();
-        }
-    </script>
 </body>
-
 </html>
