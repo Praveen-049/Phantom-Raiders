@@ -1,86 +1,252 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bike Dashboard - Live</title>
+    <title>Phantom Raiders | Bike Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
-        body { margin: 0; font-family: 'Segoe UI', Arial; background: #f0f2f5; }
-        #map { height: 100vh; width: 100%; }
-        .panel {
+        :root {
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --bg: #0b1220;
+            --glass: rgba(22, 32, 51, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Outfit', sans-serif; 
+            background: var(--bg); 
+            color: white;
+            overflow: hidden;
+        }
+
+        #map { 
+            height: 100vh; 
+            width: 100%; 
+            background: #111;
+        }
+
+        /* Glass Panel */
+        .glass-panel {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             z-index: 1000;
-            width: 220px;
+            width: 260px;
+            transition: all 0.3s ease;
         }
-        .header { font-weight: 800; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; }
-        .box { margin-top: 12px; font-size: 14px; color: #475569; }
-        .value { font-weight: 700; color: #1e293b; font-size: 1.1rem; }
-        #sync-time { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
 
-        /* Emergency Styles */
+        .header { 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .brand {
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: white;
+        }
+
+        /* Live Indicator */
+        .live-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .pulse {
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.5; }
+        }
+
+        /* Stats List */
+        .stat-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .icon-box {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+        .stat-content {
+            flex: 1;
+        }
+        .label { 
+            color: #94a3b8; 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .value { 
+            font-weight: 600; 
+            color: white; 
+            font-size: 1.1rem; 
+        }
+
+        #address { 
+            color: var(--primary); 
+            font-size: 0.85rem; 
+            line-height: 1.4;
+        }
+
+        #sync-time { 
+            font-size: 0.7rem; 
+            color: #64748b; 
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        /* Emergency Banner */
         #emergency-banner {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background: #ef4444;
+            background: var(--danger);
             color: white;
             text-align: center;
-            padding: 15px;
+            padding: 12px;
             font-weight: 800;
-            font-size: 1.2rem;
+            font-size: 1rem;
             z-index: 2000;
             display: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            animation: blink 1s infinite;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            animation: slideDown 0.5s ease-out, emergency-blink 0.8s infinite;
         }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+        @keyframes emergency-blink {
+            0% { background: #ef4444; }
+            50% { background: #991b1b; }
+            100% { background: #ef4444; }
+        }
+
+        /* Leaflet Overrides */
+        .leaflet-container { background: #000 !important; }
+        .leaflet-bar { border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; }
+        .leaflet-bar a { 
+            background: var(--glass) !important; 
+            color: white !important; 
+            border-bottom: 1px solid var(--glass-border) !important; 
+            backdrop-filter: blur(5px) !important;
+        }
+        
+        #debug-info {
+            font-size: 0.6rem;
+            color: #64748b;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid var(--glass-border);
+            display: none;
         }
     </style>
 </head>
 <body>
 
 <div id="emergency-banner">
-    ⚠️ CRASH DETECTED! EMERGENCY ALERT ⚠️
+    <i class="fas fa-triangle-exclamation"></i> CRASH DETECTED • EMERGENCY ALERT ACTIVE
 </div>
 
-<div id="status-panel" class="panel">
-    <div class="header">BIKE DASHBOARD</div>
-
-    <div class="box">
-        Speed: <div id="speed" class="value">0 km/h</div>
+<div class="glass-panel">
+    <div class="header">
+        <div class="brand">PHANTOM</div>
+        <div class="live-tag">
+            <div class="pulse"></div> LIVE
+        </div>
     </div>
 
-    <div class="box">
-        Distance from Bike: <div id="distance" class="value">calculating...</div>
+    <div class="stat-grid">
+        <!-- Speed -->
+        <div class="stat-item">
+            <div class="icon-box"><i class="fas fa-gauge-high"></i></div>
+            <div class="stat-content">
+                <div class="label">Speed</div>
+                <div id="speed" class="value">0 km/h</div>
+            </div>
+        </div>
+
+        <!-- Distance -->
+        <div class="stat-item" id="dist-container">
+            <div class="icon-box"><i class="fas fa-route"></i></div>
+            <div class="stat-content">
+                <div class="label">Distance from You</div>
+                <div id="distance" class="value">---</div>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="stat-item">
+            <div class="icon-box"><i class="fas fa-location-dot"></i></div>
+            <div class="stat-content">
+                <div class="label">Last Known Address</div>
+                <div id="address" class="value">---</div>
+            </div>
+        </div>
     </div>
 
-    <div class="box">
-        Address: <div id="address" style="font-size: 0.8rem; color: #3b82f6; font-weight: 600; margin-top: 5px;">Fetching...</div>
-    </div>
+    <div id="sync-time">Last update: Waiting...</div>
 
-    <div id="sync-time">Last update: --:--</div>
-
-    <div id="debug-info" style="font-size: 0.6rem; color: #94a3b8; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; display: none;">
-        <div>Bike: <span id="bike-latlng">0,0</span></div>
-        <div>User: <span id="user-latlng">0,0</span> (±<span id="user-acc">0</span>m)</div>
+    <div id="debug-info">
+        <div>Bike: <span id="bike-latlng">---</span></div>
+        <div>You: <span id="user-latlng">---</span> (±<span id="user-acc">0</span>m)</div>
     </div>
-    <button onclick="toggleDebug()" style="background:none; border:none; color:#cbd5e1; font-size:0.5rem; cursor:pointer; margin-top:5px;">Show Debug Info</button>
+    <button onclick="toggleDebug()" style="background:none; border:none; color:#475569; font-size:0.5rem; cursor:pointer; margin-top:10px; width:100%; text-align:right;">[DEBUG VIEW]</button>
 </div>
 
 <div id="map"></div>
 
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -99,27 +265,31 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const map = L.map('map').setView([13.0827, 80.2707], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+    // Initial Map Setup
+    const map = L.map('map', { zoomControl: false }).setView([13.0827, 80.2707], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Dark Map Style (CartoDB Dark Matter)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CARTO'
     }).addTo(map);
 
-    // Custom Bike Icon
+    // Custom BIKE Icon (SVG Path)
     const bikeIcon = L.divIcon({
         className: 'custom-bike-icon',
-        html: `<svg viewBox="0 0 512 512" width="36" height="36" fill="#3b82f6">
-                <path d="M416 96c26.5 0 48-21.5 48-48S442.5 0 416 0s-48 21.5-48 48 21.5 48 48 48zm-80 64c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zm-128 0c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zM96 96c26.5 0 48-21.5 48-48S122.5 0 96 0 48 21.5 48 48s21.5 48 48 48zm400 352H16c-8.8 0-16 7.2-16 16s7.2 16 16 16h480c8.8 0 16-7.2 16-16s-7.2-16-16-16zm-336-64V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32zm256 0V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32z"/>
-                <path d="M376.1 144H135.9c-13.3 0-25.5 8.1-30.8 20.2l-64 144C34.6 323.2 41.5 336 53.3 336H458.7c11.8 0 18.7-12.8 12.3-27.8l-64-144c-5.3-12.1-17.5-20.2-30.9-20.2z"/>
-              </svg>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
+        html: `<div style="filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))">
+                <svg viewBox="0 0 512 512" width="40" height="40">
+                    <path class="bike-path" fill="#3b82f6" d="M416 96c26.5 0 48-21.5 48-48S442.5 0 416 0s-48 21.5-48 48 21.5 48 48 48zm-80 64c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zm-128 0c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zM96 96c26.5 0 48-21.5 48-48S122.5 0 96 0 48 21.5 48 48s21.5 48 48 48zm400 352H16c-8.8 0-16 7.2-16 16s7.2 16 16 16h480c8.8 0 16-7.2 16-16s-7.2-16-16-16zm-336-64V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32zm256 0V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32z"/>
+                    <path class="bike-path" fill="#3b82f6" d="M376.1 144H135.9c-13.3 0-25.5 8.1-30.8 20.2l-64 144C34.6 323.2 41.5 336 53.3 336H458.7c11.8 0 18.7-12.8 12.3-27.8l-64-144c-5.3-12.1-17.5-20.2-30.9-20.2z"/>
+                </svg>
+               </div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
     });
 
     const marker = L.marker([0, 0], { icon: bikeIcon }).addTo(map);
-    const route = L.polyline([], { color: '#3b82f6', weight: 4 }).addTo(map);
+    const route = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.6 }).addTo(map);
 
-    const statusPanel = document.getElementById("status-panel");
-    const connText = document.getElementById("conn-text");
     const speedEl = document.getElementById("speed");
     const distanceEl = document.getElementById("distance");
     const timeEl = document.getElementById("sync-time");
@@ -127,34 +297,29 @@
     let firstLoad = true;
     let bikePos = null;
     let userPos = null;
+    let userAccuracy = 9999;
 
     function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Radius of the earth in km
+        const R = 6371; 
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                   Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const d = R * c; // Distance in km
-        return d;
+        return R * c;
     }
 
     function updateDistanceUI() {
         if (bikePos && userPos) {
-            // Only show distance if user GPS accuracy is decent (< 500m)
             if (userAccuracy > 500) {
-                distanceEl.parentElement.style.display = "none";
+                document.getElementById("dist-container").style.display = "none";
                 return;
             }
-            distanceEl.parentElement.style.display = "block";
+            document.getElementById("dist-container").style.display = "flex";
 
             const dist = getDistance(userPos.lat, userPos.lng, bikePos.lat, bikePos.lng);
-            if (dist < 1) {
-                distanceEl.innerText = Math.round(dist * 1000) + " m";
-            } else {
-                distanceEl.innerText = dist.toFixed(2) + " km";
-            }
+            distanceEl.innerText = dist < 1 ? Math.round(dist * 1000) + " m" : dist.toFixed(2) + " km";
         }
     }
 
@@ -163,31 +328,14 @@
         el.style.display = el.style.display === "none" ? "block" : "none";
     }
 
-    // Track Dashboard User's Location with High Accuracy
+    // High Accuracy Tracking
     navigator.geolocation.watchPosition((pos) => {
         userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         userAccuracy = pos.coords.accuracy;
         document.getElementById("user-latlng").innerText = userPos.lat.toFixed(4) + "," + userPos.lng.toFixed(4);
         document.getElementById("user-acc").innerText = Math.round(pos.coords.accuracy);
         updateDistanceUI();
-    }, (err) => {
-        console.log("User Geolocation error:", err);
-    }, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 10000
-    });
-
-    // Connection monitoring
-    onValue(ref(db, ".info/connected"), (snap) => {
-        if (snap.val() === true) {
-            statusPanel.classList.add("connected");
-            connText.innerText = "Connected to Live Database";
-        } else {
-            statusPanel.classList.remove("connected");
-            connText.innerText = "Offline - Reconnecting...";
-        }
-    });
+    }, null, { enableHighAccuracy: true });
 
     onValue(ref(db, "bike"), (snap) => {
         const d = snap.val();
@@ -198,28 +346,26 @@
         const pos = [d.lat, d.lng];
         marker.setLatLng(pos);
 
-        // Filter route jumps (if point is > 2km from last point, ignore for route polyline)
+        // Filter route jumps
         const lastLatLng = route.getLatLngs().length > 0 ? route.getLatLngs()[route.getLatLngs().length - 1] : null;
         let isOutlier = false;
         if (lastLatLng) {
             const dist = getDistance(lastLatLng.lat, lastLatLng.lng, d.lat, d.lng);
-            if (dist > 2) isOutlier = true; // 2km jump is suspicious
-            if (dist < 0.005) return; // Ignore if less than 5m move to keep map clean
+            if (dist > 2) isOutlier = true;
+            if (dist < 0.005) isOutlier = true;
         }
 
-        if (!isOutlier) {
-            route.addLatLng(pos);
-        }
+        if (!isOutlier) route.addLatLng(pos);
 
-        // Handle Emergency Status
+        // Emergency Handling
         const banner = document.getElementById("emergency-banner");
+        const paths = document.querySelectorAll('.bike-path');
         if (d.emergency === true) {
             banner.style.display = "block";
-            // Change color to red
-            document.querySelector('.custom-bike-icon svg').setAttribute('fill', '#ef4444');
+            paths.forEach(p => p.setAttribute('fill', '#ef4444'));
         } else {
             banner.style.display = "none";
-            document.querySelector('.custom-bike-icon svg').setAttribute('fill', '#3b82f6');
+            paths.forEach(p => p.setAttribute('fill', '#3b82f6'));
         }
 
         if (firstLoad) {
@@ -231,15 +377,13 @@
 
         speedEl.innerText = Math.round(d.speed || 0) + " km/h";
         timeEl.innerText = "Last update: " + new Date(d.time).toLocaleTimeString();
-        
-        if (d.address) {
-            document.getElementById("address").innerText = d.address;
-        }
-
+        if (d.address) document.getElementById("address").innerText = d.address;
         updateDistanceUI();
     });
 
 </script>
+</body>
+</html>
 
 </body>
 </html>
