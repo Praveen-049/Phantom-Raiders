@@ -197,7 +197,15 @@
                     <div id="address" class="value" style="font-size: 0.8rem; font-weight: 400; color: var(--primary);">---</div>
                 </div>
             </div>
-            <button class="btn btn-park" onclick="parkBike()"><i class="fab fa-whatsapp"></i> PARK & NOTIFY</button>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                <button class="btn" style="background: var(--glass-border); color: white;" onclick="parkAndLock()">
+                    <i class="fas fa-lock"></i> PARK & LOCK
+                </button>
+                <button class="btn btn-park" onclick="parkLockNotify()">
+                    <i class="fab fa-whatsapp"></i> PARK, LOCK & NOTIFY
+                </button>
+            </div>
         </div>
 
         <div style="display:flex; gap:8px; justify-content:center; margin-top:10px;">
@@ -285,15 +293,24 @@
         log("Ride Ended");
     }
 
-    window.parkBike = () => {
+    window.parkAndLock = () => {
         stopRide();
         set(ref(db, "bike/isParked"), true);
+        set(ref(db, "bike/locked"), true);
+        log("Bike Parked & Locked.");
+    };
+
+    window.parkLockNotify = () => {
+        // First perform park and lock
+        stopRide();
+        set(ref(db, "bike/isParked"), true);
+        set(ref(db, "bike/locked"), true);
         
         // WhatsApp Integration
         const lat = currentCoords ? currentCoords.lat : 0;
         const lng = currentCoords ? currentCoords.lng : 0;
         const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-        const msg = `📍 BIKE PARKED\nRider: ${riderName}\nLocation: ${currentAddress}\nMaps: ${mapUrl}`;
+        const msg = `📍 BIKE PARKED & SECURED\nRider: ${riderName}\nLocation: ${currentAddress}\nMaps: ${mapUrl}\nAnti-theft: ACTIVE 🛡️`;
         const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
         
         window.open(waUrl, '_blank');
