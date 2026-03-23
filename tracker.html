@@ -128,6 +128,11 @@
     }
 
     let lastAddressUpdate = 0;
+    
+    // Initialize Firebase at module level
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
     async function updateAddress(lat, lng) {
         const now = Date.now();
         if (now - lastAddressUpdate < 5000) return; // Limit to once every 5 seconds
@@ -152,9 +157,6 @@
     }
 
     try {
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        
         // Real connection monitoring
         onValue(ref(db, ".info/connected"), (snap) => {
             if (snap.val() === true) {
