@@ -247,7 +247,18 @@
             });
             if (!res.ok) throw new Error("HTTP " + res.status);
             const data = await res.json();
-            const addr = data.display_name || "Address not found";
+            
+            // SIMPLIFIED ADDRESS PARSING
+            let addr = "Address not found";
+            if (data.address) {
+                const parts = [
+                    data.address.road || data.address.pedestrian || data.address.suburb,
+                    data.address.neighbourhood || data.address.city_district,
+                    data.address.city || data.address.town || data.address.village
+                ].filter(Boolean);
+                addr = parts.join(", ") || data.display_name;
+            }
+            
             document.getElementById("address").innerText = addr;
             
             // Also sync address to Firebase so dashboard can see it

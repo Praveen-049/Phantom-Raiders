@@ -19,9 +19,7 @@
             z-index: 1000;
             width: 220px;
         }
-        .header { font-weight: 800; color: #1e293b; margin-bottom: 15px; display: flex; align-items: center; }
-        .status-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-right: 8px; }
-        .connected .status-dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .header { font-weight: 800; color: #1e293b; margin-bottom: 10px; display: flex; align-items: center; }
         .box { margin-top: 12px; font-size: 14px; color: #475569; }
         .value { font-weight: 700; color: #1e293b; font-size: 1.1rem; }
         #sync-time { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
@@ -57,9 +55,7 @@
 </div>
 
 <div id="status-panel" class="panel">
-    <div class="header"><span class="status-dot"></span> BIKE DASHBOARD</div>
-    
-    <div id="conn-text" style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 10px;">Connecting to Firebase...</div>
+    <div class="header">BIKE DASHBOARD</div>
 
     <div class="box">
         Speed: <div id="speed" class="value">0 km/h</div>
@@ -146,6 +142,13 @@
 
     function updateDistanceUI() {
         if (bikePos && userPos) {
+            // Only show distance if user GPS accuracy is decent (< 500m)
+            if (userAccuracy > 500) {
+                distanceEl.parentElement.style.display = "none";
+                return;
+            }
+            distanceEl.parentElement.style.display = "block";
+
             const dist = getDistance(userPos.lat, userPos.lng, bikePos.lat, bikePos.lng);
             if (dist < 1) {
                 distanceEl.innerText = Math.round(dist * 1000) + " m";
@@ -163,12 +166,12 @@
     // Track Dashboard User's Location with High Accuracy
     navigator.geolocation.watchPosition((pos) => {
         userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        userAccuracy = pos.coords.accuracy;
         document.getElementById("user-latlng").innerText = userPos.lat.toFixed(4) + "," + userPos.lng.toFixed(4);
         document.getElementById("user-acc").innerText = Math.round(pos.coords.accuracy);
         updateDistanceUI();
     }, (err) => {
         console.log("User Geolocation error:", err);
-        document.getElementById("conn-text").innerText += " | GPS Error: " + err.message;
     }, {
         enableHighAccuracy: true,
         maximumAge: 0,
