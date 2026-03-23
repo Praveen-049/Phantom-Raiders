@@ -196,6 +196,11 @@
         <div id="live-stats" style="display:none;">
             <div class="stats-grid">
                 <div class="stat-box">
+                    <div class="label">Distance</div>
+                    <div id="distance" class="value">0.00</div>
+                    <div style="font-size: 0.6rem; color: #64748b;">km</div>
+                </div>
+                <div class="stat-box">
                     <div class="label">Speed</div>
                     <div id="speed" class="value">0</div>
                     <div style="font-size: 0.6rem; color: #64748b;">km/h</div>
@@ -271,6 +276,8 @@
     let crashTimer = null;
     let currentCoords = null;
     let currentAddress = "---";
+    let rideDistance = 0;
+    let lastPos = null;
 
     // --- Login ---
     window.doLogin = async () => {
@@ -322,11 +329,22 @@
             set(ref(db, "bike/isRiding"), true);
             set(ref(db, "bike/isParked"), false);
             watchId = navigator.geolocation.watchPosition(updatePosition, (e) => log(e.message), { enableHighAccuracy:true });
+            rideDistance = 0;
+            lastPos = null;
             log("Ride Started");
         } catch (e) { log(e.message); }
     }
 
     function stopRide() {
+        if (isRiding && rideDistance > 0.01) {
+            const tripRef = ref(db, `bike/trips/${Date.now()}`);
+            set(tripRef, {
+                time: Date.now(),
+                dist: rideDistance.toFixed(2) + " km",
+                rider: riderName
+            });
+            log("Trip Saved!");
+        }
         isRiding = false;
         updateUI(false);
         set(ref(db, "bike/speed"), 0);
@@ -393,7 +411,14 @@
         document.getElementById("speed").innerText = Math.round(s);
         document.getElementById("accuracy").innerText = Math.round(accuracy);
         document.getElementById("gps-badge").innerText = `GPS ACTIVE (${Math.round(accuracy)}m)`;
-        
+
+        if (lastPos) {
+            const d = getDistance(lastPos.lat, lastPos.lng, lat, lng);
+            rideDistance += d;
+            document.getElementById("distance").innerText = rideDistance.toFixed(2);
+        }
+        lastPos = { lat, lng };
+
         if (accuracy < 100) {
             set(ref(db, "bike/lat"), lat);
             set(ref(db, "bike/lng"), lng);
@@ -402,6 +427,17 @@
             set(ref(db, "bike/accuracy"), accuracy);
             fetchAddress(lat, lng);
         }
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     async function fetchAddress(lat, lng) {

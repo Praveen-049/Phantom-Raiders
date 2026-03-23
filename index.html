@@ -194,6 +194,24 @@
             border-top: 1px solid var(--glass-border);
             display: none;
         }
+
+        /* Custom Scrollbar for Missions */
+        #mission-list::-webkit-scrollbar { width: 4px; }
+        #mission-list::-webkit-scrollbar-track { background: transparent; }
+        #mission-list::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        
+        .mission-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .mission-card:hover { background: rgba(168, 85, 247, 0.05); border-color: var(--primary); }
     </style>
 </head>
 <body>
@@ -282,7 +300,7 @@
                         <i class="fas fa-lock"></i> PARK & LOCK
                     </button>
                     <button class="btn" style="flex:1; background:#25d366; color:white; border:none; padding:12px; border-radius:12px; font-weight:800; cursor:pointer;" onclick="remoteParkNotify()">
-                        <i class="fab fa-whatsapp"></i> NOTIFY
+                        <i class="fab fa-whatsapp"></i> NOTIFY & PARK
                     </button>
                 </div>
                 <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; padding:8px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('STOP')">
@@ -294,6 +312,17 @@
                 <button class="btn" style="background:linear-gradient(135deg, var(--accent), #d97706); color:#000; border:none; padding:18px; border-radius:15px; font-weight:900; width:100%; cursor:pointer; box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);" onclick="remoteCommand('UNLOCK')">
                     <i class="fas fa-unlock"></i> RE-ACTIVATE PHANTOM
                 </button>
+            </div>
+        </div>
+
+        <!-- Recent Missions -->
+        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:10px;">
+            <div class="label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span><i class="fas fa-history"></i> Recent Missions</span>
+                <span id="mission-count" style="font-size:0.6rem; background:var(--primary); color:white; padding:2px 8px; border-radius:10px;">0</span>
+            </div>
+            <div id="mission-list" style="display:flex; flex-direction:column; max-height:160px; overflow-y:auto; padding-right:5px; width:100%;">
+                <div style="font-size:0.7rem; color:#64748b; text-align:center; padding:20px;">Retrieving mission logs...</div>
             </div>
         </div>
 
@@ -584,6 +613,34 @@
         if (d.address) document.getElementById("address").innerText = d.address;
         
         updateDistanceUI();
+    });
+
+    // --- MISSION LOG LISTENER ---
+    onValue(ref(db, "bike/trips"), (snap) => {
+        const trips = snap.val();
+        const list = document.getElementById("mission-list");
+        const count = document.getElementById("mission-count");
+        
+        if (!trips) {
+            list.innerHTML = '<div style="font-size:0.7rem; color:#64748b; text-align:center; padding:20px;">No recent missions found.</div>';
+            count.innerText = "0";
+            return;
+        }
+
+        const tripArray = Object.values(trips).sort((a, b) => b.time - a.time).slice(0, 5);
+        count.innerText = tripArray.length;
+        list.innerHTML = tripArray.map(t => `
+            <div class="mission-card">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <div style="font-size:0.75rem; font-weight:600; color:white;">${new Date(t.time).toLocaleDateString()}</div>
+                    <div style="font-size:0.65rem; color:#94a3b8;">${new Date(t.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--accent);">${t.dist || '---'}</div>
+                    <div style="font-size:0.6rem; color:#64748b; text-transform:uppercase;">Distance</div>
+                </div>
+            </div>
+        `).join('');
     });
 
 </script>
