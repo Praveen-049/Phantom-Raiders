@@ -500,6 +500,20 @@
     function stopSiren() { clearInterval(alarmInterval); alarmInterval = null; }
 
     function log(m) { document.getElementById("log-panel").innerText = m; }
+
+    // --- URL Parameter Auto-Login ---
+    window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const riderParam = params.get('rider');
+        if (riderParam) {
+            document.getElementById("rider-name").value = riderParam;
+            // We can't fully doLogin() because sensors need a real click
+            // So we'll highlight the PROCEED button
+            const proceedBtn = document.querySelector("#login-view .btn-primary");
+            proceedBtn.innerHTML = `PROCEED AS ${riderParam.toUpperCase()} <i class="fas fa-arrow-right"></i>`;
+            log("Auto-login detected for " + riderParam);
+        }
+    });
 </script>
 </body>
 </html>

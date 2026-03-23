@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom | QR Generator</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --bg: #0b1220;
+            --glass: rgba(22, 32, 51, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            padding: 40px 30px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        .brand {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #fff 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 15px;
+            border-radius: 15px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        #qrcode {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+
+        .hint {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="brand">PHANTOM QR</div>
+    <p style="margin-top:-20px; color:#94a3b8; margin-bottom:30px;">Generate your bike's digital key</p>
+    
+    <input type="text" id="rider-name" placeholder="Enter Rider Name (e.g. Praveen)" oninput="generateQR()">
+    <input type="text" id="base-url" placeholder="Your Deployment URL" oninput="generateQR()" value="">
+    
+    <div id="qrcode"></div>
+    
+    <div id="qr-link" class="hint" style="word-break: break-all; margin-bottom:20px;">---</div>
+    
+    <button class="btn" onclick="window.print()"><i class="fas fa-print"></i> PRINT STICKER</button>
+    
+    <p class="hint">Stick this QR on your bike's tank or handle for instant access.</p>
+</div>
+
+<script>
+    const qrDiv = document.getElementById("qrcode");
+    let qrcode = new QRCode(qrDiv, {
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+
+    // Auto-fill current URL as base
+    const currentUrl = window.location.href.replace('qr.html', 'tracker.html');
+    document.getElementById("base-url").value = currentUrl;
+
+    function generateQR() {
+        const name = document.getElementById("rider-name").value.trim() || "Rider";
+        const baseUrl = document.getElementById("base-url").value.trim();
+        const fullUrl = `${baseUrl}?rider=${encodeURIComponent(name)}`;
+        
+        qrcode.clear();
+        qrcode.makeCode(fullUrl);
+        document.getElementById("qr-link").innerText = fullUrl;
+    }
+
+    // Initial Gen
+    generateQR();
+</script>
+
+</body>
+</html>
