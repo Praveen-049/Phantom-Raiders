@@ -501,19 +501,36 @@
 
     function log(m) { document.getElementById("log-panel").innerText = m; }
 
-    // --- URL Parameter Auto-Login ---
+    // --- URL Parameter & LocalStorage Auto-Login ---
     window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        const riderParam = params.get('rider');
+        let riderParam = params.get('rider');
+        
+        // Priority 1: URL Param (from QR)
+        // Priority 2: Local Storage (Remembered from last time)
+        if (!riderParam) {
+            riderParam = localStorage.getItem('phantom_rider');
+        }
+
         if (riderParam) {
             document.getElementById("rider-name").value = riderParam;
-            // We can't fully doLogin() because sensors need a real click
-            // So we'll highlight the PROCEED button
+            // Pre-fill and update button
             const proceedBtn = document.querySelector("#login-view .btn-primary");
             proceedBtn.innerHTML = `PROCEED AS ${riderParam.toUpperCase()} <i class="fas fa-arrow-right"></i>`;
-            log("Auto-login detected for " + riderParam);
+            log("Rider identified: " + riderParam);
+
+            // Save for future visits
+            localStorage.setItem('phantom_rider', riderParam);
         }
     });
+
+    // Update doLogin to save name
+    const originalLogin = window.doLogin;
+    window.doLogin = async () => {
+        const name = document.getElementById("rider-name").value.trim();
+        if (name) localStorage.setItem('phantom_rider', name);
+        await originalLogin();
+    };
 </script>
 </body>
 </html>
