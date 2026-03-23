@@ -102,12 +102,22 @@
     <div class="brand">PHANTOM QR</div>
     <p style="margin-top:-20px; color:#94a3b8; margin-bottom:30px;">Generate your bike's digital key</p>
     
-    <input type="text" id="rider-name" placeholder="Enter Rider Name (e.g. Praveen)" oninput="generateQR()">
-    <input type="text" id="base-url" placeholder="Your Deployment URL" oninput="generateQR()" value="">
+    <div id="url-config" style="background:rgba(255,255,255,0.05); padding:20px; border-radius:20px; border:1px solid var(--glass-border); margin-bottom:20px;">
+        <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:10px; text-align:left;">1. Deployment URL (GitHub Pages)</div>
+        <input type="text" id="base-url" placeholder="https://username.github.io/repo/tracker.html" oninput="generateQR()" style="margin-bottom:10px;">
+        <div id="file-warning" style="display:none; color:var(--warning); font-size:0.75rem; text-align:left; padding:10px; background:rgba(245,158,11,0.1); border-radius:10px; border:1px solid var(--warning);">
+            <i class="fas fa-triangle-exclamation"></i> <b>Running Locally:</b> Your phone cannot access files on this computer. Use your GitHub Pages URL instead.
+        </div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:20px; border:1px solid var(--glass-border); margin-bottom:20px;">
+        <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:10px; text-align:left;">2. Rider Identification</div>
+        <input type="text" id="rider-name" placeholder="Enter Rider Name (e.g. Praveen)" oninput="generateQR()" style="margin-bottom:0;">
+    </div>
     
     <div id="qrcode"></div>
     
-    <div id="qr-link" class="hint" style="word-break: break-all; margin-bottom:20px;">---</div>
+    <div id="qr-link" class="hint" style="word-break: break-all; margin-bottom:20px; color:var(--primary); font-weight:600;">---</div>
     
     <button class="btn" onclick="window.print()"><i class="fas fa-print"></i> PRINT STICKER</button>
     
@@ -125,7 +135,14 @@
     });
 
     // Auto-fill current URL as base
-    const currentUrl = window.location.href.replace('qr.html', 'tracker.html');
+    let currentUrl = window.location.href.replace('qr.html', 'tracker.html');
+    
+    if (currentUrl.startsWith('file://')) {
+        document.getElementById("file-warning").style.display = "block";
+        // Suggest GitHub Pages URL
+        currentUrl = "https://Praveen-049.github.io/Phantom-Raiders/tracker.html";
+    }
+    
     document.getElementById("base-url").value = currentUrl;
 
     function generateQR() {
