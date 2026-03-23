@@ -25,9 +25,36 @@
         .box { margin-top: 12px; font-size: 14px; color: #475569; }
         .value { font-weight: 700; color: #1e293b; font-size: 1.1rem; }
         #sync-time { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+
+        /* Emergency Styles */
+        #emergency-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #ef4444;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            z-index: 2000;
+            display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
+
+<div id="emergency-banner">
+    ⚠️ CRASH DETECTED! EMERGENCY ALERT ⚠️
+</div>
 
 <div id="status-panel" class="panel">
     <div class="header"><span class="status-dot"></span> BIKE DASHBOARD</div>
@@ -147,6 +174,17 @@
         const pos = [d.lat, d.lng];
         marker.setLatLng(pos);
         route.addLatLng(pos);
+
+        // Handle Emergency Status
+        const banner = document.getElementById("emergency-banner");
+        if (d.emergency === true) {
+            banner.style.display = "block";
+            // Change color to red
+            document.querySelector('.custom-bike-icon svg').setAttribute('fill', '#ef4444');
+        } else {
+            banner.style.display = "none";
+            document.querySelector('.custom-bike-icon svg').setAttribute('fill', '#3b82f6');
+        }
 
         if (firstLoad) {
             map.setView(pos, 16);
