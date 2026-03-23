@@ -262,8 +262,18 @@
             </div>
         </div>
 
+        <!-- Remote Ride Control -->
+        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:10px;">
+            <button class="btn" style="background:var(--success); color:white; border:none; padding:10px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('START')">
+                <i class="fas fa-play"></i> REMOTE START RIDE
+            </button>
+            <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; padding:8px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('STOP')">
+                <i class="fas fa-stop"></i> REMOTE STOP
+            </button>
+        </div>
+
         <!-- Anti-theft Toggle -->
-        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px;">
+        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:10px; margin-top:5px;">
             <div class="icon-box" id="lock-icon-box"><i class="fas fa-lock-open"></i></div>
             <div class="stat-content">
                 <div class="label">Anti-Theft Lock</div>
@@ -423,6 +433,12 @@
             alarmInterval = null;
         }
     }
+
+    // --- Remote Commands ---
+    window.remoteCommand = (cmd) => {
+        set(ref(db, "bike/remote_command"), cmd);
+        updateTimeline(`Sent Remote ${cmd} command`);
+    };
 
     onValue(ref(db, "bike/locked"), (snap) => {
         isLocked = snap.val() === true;

@@ -267,9 +267,9 @@
 
     // --- Login ---
     window.doLogin = async () => {
-        riderName = document.getElementById("rider-name").value.trim() || "Raider";
+        const nameInput = document.getElementById("rider-name");
+        riderName = nameInput.value.trim() || localStorage.getItem('phantom_rider') || "Raider";
         
-        // Pre-request sensor permissions on login to unlock them for the session
         try {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
                 await DeviceMotionEvent.requestPermission();
@@ -280,6 +280,8 @@
         document.getElementById("display-rider").innerText = "Rider: " + riderName;
         document.getElementById("login-view").style.display = "none";
         document.getElementById("ride-view").style.display = "flex";
+        
+        localStorage.setItem('phantom_rider', riderName);
         set(ref(db, "bike/rider"), riderName);
         set(ref(db, "bike/isParked"), false);
         log("Logged in as " + riderName);
@@ -303,9 +305,7 @@
 
     async function startRide() {
         try {
-            // Re-check permission if needed (though initSensors handles it)
             if (!sensorsInitialized) initSensors();
-            
             isRiding = true;
             updateUI(true);
             set(ref(db, "bike/isRiding"), true);
@@ -321,7 +321,6 @@
         set(ref(db, "bike/speed"), 0);
         set(ref(db, "bike/isRiding"), false);
         if (watchId) navigator.geolocation.clearWatch(watchId);
-        // Note: devicemotion listener is NO LONGER removed to allow anti-theft
         log("Ride Ended");
     }
 
@@ -333,16 +332,12 @@
     };
 
     window.parkLockNotify = () => {
-        // First perform park and lock
         parkAndLock();
-        
-        // WhatsApp Integration
         const lat = currentCoords ? currentCoords.lat : 0;
         const lng = currentCoords ? currentCoords.lng : 0;
         const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
         const msg = `📍 BIKE PARKED & SECURED\nRider: ${riderName}\nLocation: ${currentAddress}\nMaps: ${mapUrl}\nAnti-theft: ACTIVE 🛡️`;
         const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-        
         window.open(waUrl, '_blank');
         log("Parking notification sent.");
     };
@@ -374,7 +369,6 @@
             icon.className = "fas fa-play fa-2x";
             text.innerText = "START RIDE";
             stats.style.display = "none";
-            // Note: parkedView display handled by Firebase listener
         }
     }
 
@@ -411,13 +405,10 @@
 
     // --- Motion / Safety ---
     function handleMotion(event) {
-        // Theft check (always monitoring if locked)
-        // Add 1.5s arming delay to allow user to settle phone
         if (isLocked && !isTheftAlert && (Date.now() - lastLockTime > 1500)) {
             const acc = event.accelerationIncludingGravity;
             if (acc) {
                 const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-                // SENSITIVITY: Lowered threshold from 3.5 to 0.8 for "small movement"
                 if (Math.abs(mag - 9.8) > 0.8) set(ref(db, "bike/theft"), true);
             }
         }
@@ -450,7 +441,7 @@
         log("Emergency Alert Sent!");
     }
 
-    // --- Anti-Theft / Siren ---
+    // --- Firebase Listeners ---
     onValue(ref(db, "bike/locked"), (s) => {
         isLocked = s.val() === true;
         if (isLocked) lastLockTime = Date.now();
@@ -461,19 +452,18 @@
     });
 
     onValue(ref(db, "bike/isParked"), (s) => {
-        const isParked = s.val() === true;
+        const isParkStack = s.val() === true;
         const parkedView = document.getElementById("parked-view");
         const rideBtn = document.getElementById("start-ride-btn");
         const liveStats = document.getElementById("live-stats");
 
-        if (isParked) {
+        if (isParkStack) {
             parkedView.style.display = "flex";
             rideBtn.style.display = "none";
             liveStats.style.display = "none";
         } else {
             parkedView.style.display = "none";
             rideBtn.style.display = "flex";
-            // liveStats naturally depends on isRiding
         }
     });
 
@@ -481,8 +471,19 @@
         isTheftAlert = s.val() === true;
         if (isTheftAlert) { startSiren(); document.body.style.background = "#450a0a"; }
         else { stopSiren(); document.body.style.background = "var(--bg)"; }
+        document.getElementById("log-panel").style.background = isTheftAlert ? "#ef4444" : "rgba(255,255,255,0.05)";
     });
 
+    onValue(ref(db, "bike/remote_command"), (s) => {
+        const cmd = s.val();
+        if (!cmd) return;
+        log("Remote Command: " + cmd);
+        if (cmd === "START" && !isRiding) startRide();
+        else if (cmd === "STOP" && isRiding) stopRide();
+        set(ref(db, "bike/remote_command"), null);
+    });
+
+    // --- Siren ---
     function startSiren() {
         if (alarmInterval) return;
         if (!audioCtx) audioCtx = new AudioContext();
@@ -501,36 +502,17 @@
 
     function log(m) { document.getElementById("log-panel").innerText = m; }
 
-    // --- URL Parameter & LocalStorage Auto-Login ---
+    // --- Auto-Login ---
     window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        let riderParam = params.get('rider');
-        
-        // Priority 1: URL Param (from QR)
-        // Priority 2: Local Storage (Remembered from last time)
-        if (!riderParam) {
-            riderParam = localStorage.getItem('phantom_rider');
-        }
-
+        let riderParam = params.get('rider') || localStorage.getItem('phantom_rider');
         if (riderParam) {
             document.getElementById("rider-name").value = riderParam;
-            // Pre-fill and update button
             const proceedBtn = document.querySelector("#login-view .btn-primary");
             proceedBtn.innerHTML = `PROCEED AS ${riderParam.toUpperCase()} <i class="fas fa-arrow-right"></i>`;
-            log("Rider identified: " + riderParam);
-
-            // Save for future visits
-            localStorage.setItem('phantom_rider', riderParam);
+            log("Rider: " + riderParam);
         }
     });
-
-    // Update doLogin to save name
-    const originalLogin = window.doLogin;
-    window.doLogin = async () => {
-        const name = document.getElementById("rider-name").value.trim();
-        if (name) localStorage.setItem('phantom_rider', name);
-        await originalLogin();
-    };
 </script>
 </body>
 </html>
