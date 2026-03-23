@@ -2,208 +2,201 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bike Tracker - Running</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phantom Tracker | Ride Mode</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         :root {
-            --bg: #0b1220;
-            --card: #162033;
-            --box: #0f1a2e;
-            --success: #10b981;
+            --primary: #3b82f6;
             --danger: #ef4444;
+            --success: #10b981;
+            --bg: #0b1220;
+            --glass: rgba(22, 32, 51, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: var(--bg);
-            color: white;
+
+        body { 
+            margin: 0; 
+            font-family: 'Outfit', sans-serif; 
+            background: var(--bg); 
+            color: white; 
             display: flex;
-            height: 100vh;
-            margin: 0;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-        .card {
-            background: var(--card);
-            padding: 30px;
-            border-radius: 16px;
+            height: 100vh;
             text-align: center;
-            width: 300px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            overflow: hidden;
+            transition: background 0.5s ease;
         }
-        h2 { margin-top: 0; font-weight: 800; color: #3b82f6; }
-        .status-box {
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .connected { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .disconnected { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        
-        .box {
-            background: var(--box);
-            padding: 12px;
-            margin-top: 10px;
-            border-radius: 8px;
-            text-align: left;
+
+        /* Glass Container */
+        .container {
+            width: 85%;
+            max-width: 400px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 40px 25px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 30px;
         }
-        .label { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
-        .value { font-weight: 700; color: white; }
-        .address-box {
-            background: var(--box);
-            padding: 12px;
+
+        .header {
+            margin-bottom: 10px;
+        }
+        .brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Large Start Button */
+        #start-ride-btn {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 8px solid rgba(59, 130, 246, 0.2);
+            color: white;
+            font-family: 'Outfit';
+            font-weight: 800;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+        }
+        #start-ride-btn:active { transform: scale(0.9); }
+        #start-ride-btn.riding {
+            background: var(--danger);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Stats Grid (Visible when riding) */
+        .stats-grid {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+        }
+        .label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        .value { font-size: 1.4rem; font-weight: 700; color: white; }
+
+        /* Status Badges */
+        .status-area {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
             margin-top: 10px;
-            border-radius: 8px;
-            text-align: left;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            min-height: 40px;
         }
-        #address { color: #3b82f6; font-weight: 600; }
-        #error-log {
-            margin-top: 15px;
-            font-size: 0.7rem;
-            color: var(--danger);
-            max-height: 60px;
-            overflow-y: auto;
-            text-align: left;
+        .badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
+        .badge-gps { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-safety { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-locked { background: rgba(249, 115, 22, 0.2); color: #f97316; display: none; }
 
         /* Crash Overlay */
         #crash-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(239, 68, 68, 0.95);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--danger);
+            z-index: 5000;
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            color: white;
             text-align: center;
-            padding: 20px;
         }
-        #crash-overlay h1 { font-size: 3rem; margin-bottom: 10px; }
-        #crash-overlay p { font-size: 1.2rem; margin-bottom: 30px; }
+        .countdown { font-size: 6rem; font-weight: 900; margin: 20px 0; }
         .cancel-btn {
-            background: white;
-            color: var(--danger);
-            border: none;
-            padding: 15px 40px;
-            border-radius: 30px;
-            font-weight: 800;
-            font-size: 1.1rem;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background: white; color: var(--danger); border: none;
+            padding: 15px 40px; border-radius: 12px; font-weight: 800; cursor: pointer;
         }
-        #crash-timer { font-size: 4rem; font-weight: 800; margin-bottom: 20px; }
 
-        /* Settings Card */
-        .settings-card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 16px;
-            margin-top: 15px;
-            width: 300px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        #log-panel {
+            position: fixed;
+            bottom: 10px; width: 90%;
+            font-size: 0.6rem; color: #475569;
+            max-height: 40px; overflow: hidden;
         }
-        .toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #334155;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px; width: 18px;
-            left: 3px; bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--success); }
-        input:checked + .slider:before { transform: translateX(26px); }
-        
-        .status-indicator { font-size: 0.75rem; color: #94a3b8; }
-        .status-active { color: var(--success); font-weight: bold; }
-        .status-idle { color: #64748b; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>BIKE TRACKER</h2>
-    <div id="connection" class="status-box disconnected">Firebase: Disconnected</div>
-    <div id="gps-status" style="font-size: 0.8rem; margin-bottom: 10px; color: #94a3b8;">GPS: Waiting...</div>
-
-    <div class="box">
-        <span class="label">Latitude</span>
-        <span id="lat" class="value">0.000000</span>
-    </div>
-    <div class="box">
-        <span class="label">Longitude</span>
-        <span id="lng" class="value">0.000000</span>
-    </div>
-    <div class="box">
-        <span class="label">Speed</span>
-        <span class="value"><span id="speed">0</span> <small>km/h</small></span>
-    </div>
-
-    <div class="address-box">
-        <div class="label" style="margin-bottom: 5px;">Current Address</div>
-        <div id="address">Fetching address...</div>
-    </div>
-
-    <div id="error-log"></div>
-    <button onclick="triggerCrashAlert()" style="background:none; border:none; color:#334155; font-size:0.6rem; cursor:pointer; margin-top:10px;">[TEST CRASH]</button>
-</div>
-
-<div class="settings-card">
-    <div class="toggle-row">
-        <span style="font-weight: 600; font-size: 0.9rem;">Crash Detection</span>
-        <label class="switch">
-            <input type="checkbox" id="crash-toggle" onchange="toggleCrashDetection()">
-            <span class="slider"></span>
-        </label>
-    </div>
-    <div style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
-        Status: <span id="crash-detection-status" style="font-weight: 700; color: #10b981;">Idle</span> | 
-        Lock: <span id="lock-status" style="font-weight: 700; color: #64748b;">Unlocked</span>
-    </div>
-    <div class="status-indicator" style="font-size: 0.7rem;">
-        Last: <span id="last-crash-time">Never</span>
-    </div>
-</div>
-
 <div id="crash-overlay">
-    <h1>CRASH DETECTED!</h1>
-    <p>Sending emergency alert in...</p>
-    <div id="crash-timer">10</div>
-    <button class="cancel-btn" onclick="cancelCrash()">I AM OKAY (CANCEL)</button>
+    <i class="fas fa-triangle-exclamation fa-4x"></i>
+    <h1 style="font-size: 2.5rem; margin: 10px 0;">CRASH DETECTED!</h1>
+    <div class="countdown" id="countdown">10</div>
+    <p style="margin-bottom: 30px;">Emergency alert will be sent in <span id="secs">10</span> seconds.</p>
+    <button class="cancel-btn" onclick="cancelCrashAlert()">I AM OK (CANCEL)</button>
 </div>
+
+<div class="container">
+    <div class="header">
+        <div class="brand">PHANTOM</div>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin: 5px 0;">Premium Ride Intelligence</p>
+    </div>
+
+    <button id="start-ride-btn" onclick="toggleRide()">START RIDE</button>
+
+    <div id="stats-view" class="stats-grid">
+        <div class="stat-box">
+            <div class="label">Speed</div>
+            <div id="speed" class="value">0</div>
+            <div style="font-size: 0.6rem; color: #64748b;">km/h</div>
+        </div>
+        <div class="stat-box">
+            <div class="label">Accuracy</div>
+            <div id="accuracy" class="value">--</div>
+            <div style="font-size: 0.6rem; color: #64748b;">meters</div>
+        </div>
+        <div class="stat-box" style="grid-column: span 2;">
+            <div class="label">Current Location</div>
+            <div id="address" class="value" style="font-size: 0.9rem; font-weight: 400; color: #3b82f6;">---</div>
+        </div>
+    </div>
+
+    <div class="status-area">
+        <div class="badge badge-gps" id="gps-badge"><i class="fas fa-satellite"></i> GPS SEARCHING</div>
+        <div class="badge badge-safety" id="safety-badge" style="display:none;"><i class="fas fa-shield-halved"></i> SAFETY ON</div>
+        <div id="lock-badge" class="badge badge-locked"><i class="fas fa-lock"></i> SECURED</div>
+    </div>
+</div>
+
+<div id="log-panel">System Initialized. Waiting for rider...</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -212,7 +205,6 @@
     const firebaseConfig = {
         apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
         authDomain: "phantom-raiders.firebaseapp.com",
-        // Using the exact URL identified from your console link
         databaseURL: "https://phantom-raiders-default-rtdb.asia-southeast1.firebasedatabase.app",
         projectId: "phantom-raiders",
         storageBucket: "phantom-raiders.firebasestorage.app",
@@ -221,175 +213,211 @@
         measurementId: "G-3GX5D8RDMW"
     };
 
-    const connectionEl = document.getElementById("connection");
-    const gpsStatusEl = document.getElementById("gps-status");
-    const errorLogEl = document.getElementById("error-log");
-
-    function logError(msg) {
-        const div = document.createElement("div");
-        div.textContent = msg;
-        errorLogEl.appendChild(div);
-    }
-
-    let lastAddressUpdate = 0;
-    
-    // Initialize Firebase at module level
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    async function updateAddress(lat, lng) {
-        const now = Date.now();
-        if (now - lastAddressUpdate < 5000) return; // Limit to once every 5 seconds
-        lastAddressUpdate = now;
+    // --- State ---
+    let isRiding = false;
+    let isLocked = false;
+    let isTheftAlert = false;
+    let watchId = null;
+    let alarmInterval = null;
+    let audioCtx = null;
+    let crashTimer = null;
 
+    // --- Core Logic ---
+    window.toggleRide = async () => {
+        if (!isRiding) {
+            await startRide();
+        } else {
+            stopRide();
+        }
+    };
+
+    async function startRide() {
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-                headers: { 'Accept-Language': 'en' }
-            });
-            if (!res.ok) throw new Error("HTTP " + res.status);
-            const data = await res.json();
-            
-            // SIMPLIFIED ADDRESS PARSING
-            let addr = "Address not found";
-            if (data.address) {
-                const parts = [
-                    data.address.road || data.address.pedestrian || data.address.suburb,
-                    data.address.neighbourhood || data.address.city_district,
-                    data.address.city || data.address.town || data.address.village
-                ].filter(Boolean);
-                addr = parts.join(", ") || data.display_name;
+            // 1. Permissions (iOS requires user gesture, which this click is)
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                const permission = await DeviceMotionEvent.requestPermission();
+                if (permission !== 'granted') {
+                    alert("Motion permission required for crash detection.");
+                    return;
+                }
             }
-            
-            document.getElementById("address").innerText = addr;
-            
-            // Also sync address to Firebase so dashboard can see it
-            set(ref(db, "bike/address"), addr);
+
+            // 2. UI Updates
+            isRiding = true;
+            const btn = document.getElementById("start-ride-btn");
+            btn.innerText = "STOP RIDE";
+            btn.classList.add("riding");
+            document.getElementById("stats-view").style.display = "grid";
+            document.getElementById("safety-badge").style.display = "flex";
+            log("Ride Started. Crash detection active.");
+
+            // 3. Start GPS
+            watchId = navigator.geolocation.watchPosition(updatePosition, handleGPSError, {
+                enableHighAccuracy: true,
+                maximumAge: 0
+            });
+
+            // 4. Start Crash Detection
+            window.addEventListener('devicemotion', handleMotion);
         } catch (e) {
-            console.error("Address fetch failed", e);
-            document.getElementById("address").innerText = "Lookup failed: " + e.message;
-            logError("Address API: " + e.message);
+            log("Error starting ride: " + e.message);
         }
     }
 
-    try {
-        // Real connection monitoring
-        onValue(ref(db, ".info/connected"), (snap) => {
-            if (snap.val() === true) {
-                connectionEl.innerText = "Firebase: Connected ✓";
-                connectionEl.className = "status-box connected";
-            } else {
-                connectionEl.innerText = "Firebase: Disconnected ✗";
-                connectionEl.className = "status-box disconnected";
-            }
-        });
-
-        navigator.geolocation.watchPosition((pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            const speed = pos.coords.speed ? pos.coords.speed * 3.6 : 0;
-
-            document.getElementById("lat").innerText = lat.toFixed(6);
-            document.getElementById("lng").innerText = lng.toFixed(6);
-            document.getElementById("speed").innerText = Math.round(speed);
-            gpsStatusEl.innerText = "GPS: Active Accuracy: " + Math.round(pos.coords.accuracy) + "m";
-
-            // ACCURACY FILTER: Only sync if accuracy is < 60 meters
-            if (pos.coords.accuracy > 60) {
-                gpsStatusEl.style.color = "#ef4444";
-                gpsStatusEl.innerText += " (Poor - Ignoring)";
-                return;
-            }
-            gpsStatusEl.style.color = "#10b981";
-
-            updateAddress(lat, lng);
-
-            set(ref(db, "bike"), {
-                lat: lat,
-                lng: lng,
-                speed: speed,
-                time: Date.now()
-            }).catch(e => logError("Sync Error: " + e.message));
-
-        }, (err) => {
-            gpsStatusEl.innerText = "GPS Error: " + err.message;
-            logError("GPS: " + err.message);
-        }, {
-            enableHighAccuracy: true,
-            maximumAge: 0
-        });
-
-    } catch (e) {
-        logError("Init Error: " + e.message);
+    function stopRide() {
+        isRiding = false;
+        const btn = document.getElementById("start-ride-btn");
+        btn.innerText = "START RIDE";
+        btn.classList.remove("riding");
+        document.getElementById("stats-view").style.display = "none";
+        document.getElementById("safety-badge").style.display = "none";
+        
+        if (watchId) navigator.geolocation.clearWatch(watchId);
+        window.removeEventListener('devicemotion', handleMotion);
+        
+        // Reset Firebase speed but keep last location
+        set(ref(db, "bike/speed"), 0);
+        log("Ride Stopped.");
     }
 
-    // --- REFINED CRASH DETECTION LOGIC ---
-    let crashDetectionEnabled = false;
-    let crashDetected = false;
-    let timerInterval = null;
-    let countdown = 10;
-    
-    // Limits
-    const ACC_SPIKE = 18; // m/s²
-    const TILT_ANGLE_CHANGE = 60; // degrees
-    const TILT_TIME_LIMIT = 500; // ms
-    const SUSTAINED_TILT_ANGLE = 70; // degrees
-    const SUSTAINED_TILT_TIME = 3000; // ms
-    
-    // Tracking state
-    let lastOrientation = { beta: 0, gamma: 0, time: 0 };
-    let tiltHistory = [];
-    let sustainedTiltStart = null;
-    let sensorInterval = null;
+    // --- GPS Logic ---
+    function updatePosition(pos) {
+        if (!isRiding) return;
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const speed = pos.coords.speed ? pos.coords.speed * 3.6 : 0;
+        const accuracy = pos.coords.accuracy;
 
-    // --- ANTI-THEFT LOGIC ---
-    let isLocked = false;
-    let isTheftAlert = false;
-    let audioContext = null;
-    let oscillator = null;
+        document.getElementById("speed").innerText = Math.round(speed);
+        document.getElementById("accuracy").innerText = Math.round(accuracy);
+        document.getElementById("gps-badge").innerHTML = `<i class="fas fa-satellite"></i> GPS ACTIVE (${Math.round(accuracy)}m)`;
+        
+        if (accuracy < 80) {
+            set(ref(db, "bike"), { 
+                lat, lng, speed, 
+                time: Date.now(), 
+                accuracy,
+                isRiding: true
+            });
+            updateAddress(lat, lng);
+        }
+    }
 
-    // Listen for lock/unlock state from Firebase
-    onValue(ref(db, "bike/locked"), (snapshot) => {
-        isLocked = snapshot.val() === true;
-        document.getElementById("lock-status").innerText = isLocked ? "Locked" : "Unlocked";
-        document.getElementById("lock-status").style.color = isLocked ? "#ef4444" : "#64748b";
-        if (!isLocked) {
-            // If unlocked, ensure theft alert is cleared and siren stopped
-            if (isTheftAlert) {
-                set(ref(db, "bike/theft"), false);
+    async function updateAddress(lat, lng) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await res.json();
+            let addr = "Location Found";
+            if (data.address) {
+                const parts = [
+                    data.address.road || data.address.pedestrian,
+                    data.address.suburb || data.address.neighbourhood,
+                    data.address.city || data.address.town
+                ].filter(Boolean);
+                addr = parts.join(", ");
             }
-            stopSiren();
+            document.getElementById("address").innerText = addr;
+            set(ref(db, "bike/address"), addr);
+        } catch (e) {}
+    }
+
+    // --- Motion / Crash Logic ---
+    function handleMotion(event) {
+        // Theft check (always monitoring if locked)
+        if (isLocked && !isTheftAlert) {
+            const acc = event.accelerationIncludingGravity;
+            if (acc) {
+                const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
+                if (Math.abs(mag - 9.8) > 3.0) set(ref(db, "bike/theft"), true);
+            }
+        }
+
+        if (!isRiding) return;
+
+        // Crash Detection (Linear acceleration)
+        const acc = event.acceleration;
+        if (acc && acc.x !== null) {
+            const crashMag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
+            if (crashMag > 22) { // Threshold ~2.2G
+                triggerCrashAlert();
+            }
+        }
+    }
+
+    function triggerCrashAlert() {
+        if (crashTimer) return;
+        document.getElementById("crash-overlay").style.display = "flex";
+        let count = 10;
+        document.getElementById("countdown").innerText = count;
+        document.getElementById("secs").innerText = count;
+        
+        crashTimer = setInterval(() => {
+            count--;
+            document.getElementById("countdown").innerText = count;
+            document.getElementById("secs").innerText = count;
+            if (count <= 0) {
+                sendEmergency();
+                cancelCrashAlert();
+            }
+        }, 1000);
+    }
+
+    window.cancelCrashAlert = () => {
+        clearInterval(crashTimer);
+        crashTimer = null;
+        document.getElementById("crash-overlay").style.display = "none";
+    };
+
+    function sendEmergency() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            set(ref(db, "bike/emergency"), true);
+            set(ref(db, "bike/crash"), {
+                time: Date.now(),
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude
+            });
+            alert("EMERGENCY SIGNAL SENT!");
+        });
+    }
+
+    // --- Anti-Theft / Siren ---
+    onValue(ref(db, "bike/locked"), (snap) => {
+        isLocked = snap.val() === true;
+        document.getElementById("lock-badge").style.display = isLocked ? "flex" : "none";
+        if (!isLocked && isTheftAlert) {
+            set(ref(db, "bike/theft"), false);
         }
     });
 
-    // Listen for theft alert from Firebase
-    onValue(ref(db, "bike/theft"), (snapshot) => {
-        isTheftAlert = snapshot.val() === true;
+    onValue(ref(db, "bike/theft"), (snap) => {
+        isTheftAlert = snap.val() === true;
         if (isTheftAlert) {
             startSiren();
-            logError("THEFT DETECTED! Siren activated.");
+            document.body.style.background = "#450a0a";
         } else {
             stopSiren();
+            document.body.style.background = "var(--bg)";
         }
     });
 
     function startSiren() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
         if (alarmInterval) return;
-
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         alarmInterval = setInterval(() => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(800, audioContext.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.5);
-            gain.gain.setValueAtTime(0.5, audioContext.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
             osc.connect(gain);
-            gain.connect(audioContext.destination);
+            gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioContext.currentTime + 0.5);
+            osc.stop(audioCtx.currentTime + 0.4);
         }, 500);
     }
 
@@ -400,192 +428,13 @@
         }
     }
 
-    window.toggleCrashDetection = async function() {
-        const toggle = document.getElementById("crash-toggle");
-        if (toggle.checked) {
-            const permission = await initCrashDetection();
-            if (permission) {
-                crashDetectionEnabled = true;
-                document.getElementById("crash-detection-status").innerText = "Active";
-                document.getElementById("crash-detection-status").className = "status-active";
-            } else {
-                toggle.checked = false;
-                logError("Sensor permissions denied.");
-            }
-        } else {
-            crashDetectionEnabled = false;
-            document.getElementById("crash-detection-status").innerText = "Idle";
-            document.getElementById("crash-detection-status").className = "status-idle";
-            stopSensors();
-        }
-    };
-
-    async function initCrashDetection() {
-        try {
-            // Request iOS motion permission
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                const response = await DeviceMotionEvent.requestPermission();
-                if (response !== 'granted') return false;
-            }
-            
-            // Start battery-friendly interval (200ms check)
-            startSensors();
-            return true;
-        } catch (e) {
-            logError("Crash Init Error: " + e.message);
-            return false;
-        }
+    // --- Helpers ---
+    function log(msg) {
+        document.getElementById("log-panel").innerText = msg;
     }
-
-    function startSensors() {
-        window.addEventListener('devicemotion', handleMotion);
-        window.addEventListener('deviceorientation', handleOrientation);
-        sensorInterval = setInterval(detectCrash, 200);
+    function handleGPSError(err) {
+        log("GPS Error: " + err.message);
     }
-
-    function stopSensors() {
-        window.removeEventListener('devicemotion', handleMotion);
-        window.removeEventListener('deviceorientation', handleOrientation);
-        if (sensorInterval) clearInterval(sensorInterval);
-    }
-
-    let currentMotion = null;
-    let currentOrientation = null;
-
-    function handleMotion(event) {
-        const acc = event.accelerationIncludingGravity;
-        if (!acc) return;
-        
-        // --- ANTI-THEFT MOTION CHECK ---
-        if (isLocked && !isTheftAlert) {
-            const mag = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
-            // If movement is detected (> 2.5 m/s^2 change from gravity baseline)
-            // gravity is ~9.8, so we check for significant spikes
-            if (Math.abs(mag - 9.8) > 2.5) {
-                set(ref(db, "bike/theft"), true);
-            }
-        }
-
-        if (!crashDetectionEnabled) return;
-        currentMotion = event.accelerationIncludingGravity;
-    }
-
-    function handleOrientation(event) {
-        if (!crashDetectionEnabled) return;
-        currentOrientation = {
-            beta: event.beta,
-            gamma: event.gamma,
-            time: performance.now()
-        };
-    }
-
-    function detectCrash() {
-        if (!crashDetectionEnabled || crashDetected) return;
-
-        const now = performance.now();
-
-        // 1. Acceleration Spike
-        if (currentMotion) {
-            const acc = Math.sqrt(currentMotion.x**2 + currentMotion.y**2 + currentMotion.z**2);
-            if (acc > ACC_SPIKE) {
-                console.log("Crash detected: Acceleration spike", acc);
-                triggerCrashAlert();
-                return;
-            }
-        }
-
-        // 2. Tilt Changes
-        if (currentOrientation) {
-            const tilt = Math.max(Math.abs(currentOrientation.beta || 0), Math.abs(currentOrientation.gamma || 0));
-            
-            // Sudden tilt change (> 60 deg in 500ms)
-            tiltHistory.push(currentOrientation);
-            tiltHistory = tiltHistory.filter(h => now - h.time <= TILT_TIME_LIMIT);
-            
-            if (tiltHistory.length > 1) {
-                const oldest = tiltHistory[0];
-                const deltaBeta = Math.abs(currentOrientation.beta - oldest.beta);
-                const deltaGamma = Math.abs(currentOrientation.gamma - oldest.gamma);
-                if (deltaBeta > TILT_ANGLE_CHANGE || deltaGamma > TILT_ANGLE_CHANGE) {
-                    console.log("Crash detected: Sudden tilt");
-                    triggerCrashAlert();
-                    return;
-                }
-            }
-
-            // Sustained tilt (> 70 deg for 3s)
-            if (tilt > SUSTAINED_TILT_ANGLE) {
-                if (!sustainedTiltStart) sustainedTiltStart = now;
-                if (now - sustainedTiltStart > SUSTAINED_TILT_TIME) {
-                    console.log("Crash detected: Sustained tilt");
-                    triggerCrashAlert();
-                    return;
-                }
-            } else {
-                sustainedTiltStart = null;
-            }
-        }
-    }
-
-    window.triggerCrashAlert = function() {
-        if (crashDetected) return;
-        crashDetected = true;
-        countdown = 10;
-        
-        document.getElementById("crash-overlay").style.display = "flex";
-        document.getElementById("crash-timer").innerText = countdown;
-        document.getElementById("last-crash-time").innerText = new Date().toLocaleTimeString();
-
-        timerInterval = setInterval(() => {
-            countdown--;
-            document.getElementById("crash-timer").innerText = countdown;
-            if (countdown <= 0) {
-                clearInterval(timerInterval);
-                sendCrashLocation();
-            }
-        }, 1000);
-    }
-
-    window.cancelCrash = function() {
-        crashDetected = false;
-        clearInterval(timerInterval);
-        document.getElementById("crash-overlay").style.display = "none";
-        // Reset buffers
-        tiltHistory = [];
-        sustainedTiltStart = null;
-    }
-
-    async function sendCrashLocation() {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            const timestamp = Date.now();
-
-            // Send to Firebase
-            set(ref(db, "bike/crash"), {
-                detected: true,
-                time: timestamp,
-                lat: lat,
-                lng: lng,
-                status: "EMERGENCY_ALERT_SENT"
-            });
-
-            // Update existing tracker location too
-            set(ref(db, "bike"), {
-                lat: lat,
-                lng: lng,
-                speed: 0,
-                time: timestamp,
-                emergency: true
-            });
-
-            alert("EMERGENCY ALERT SENT TO FIREBASE");
-        }, (err) => {
-            logError("Crash Location Error: " + err.message);
-        }, { enableHighAccuracy: true });
-    }
-
 </script>
-
 </body>
 </html>
