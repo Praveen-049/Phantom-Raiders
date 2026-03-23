@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bike Dashboard - Live</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Removed Leaflet CSS -->
     <style>
         body { margin: 0; font-family: 'Segoe UI', Arial; background: #f0f2f5; }
         #map { height: 100vh; width: 100%; }
@@ -84,7 +84,8 @@
 
 <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -103,24 +104,37 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const map = L.map('map').setView([13.0827, 80.2707], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    // Custom Bike Icon
-    const bikeIcon = L.divIcon({
-        className: 'custom-bike-icon',
-        html: `<svg viewBox="0 0 512 512" width="36" height="36" fill="#3b82f6">
-                <path d="M416 96c26.5 0 48-21.5 48-48S442.5 0 416 0s-48 21.5-48 48 21.5 48 48 48zm-80 64c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zm-128 0c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zM96 96c26.5 0 48-21.5 48-48S122.5 0 96 0 48 21.5 48 48s21.5 48 48 48zm400 352H16c-8.8 0-16 7.2-16 16s7.2 16 16 16h480c8.8 0 16-7.2 16-16s-7.2-16-16-16zm-336-64V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32zm256 0V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32z"/>
-                <path d="M376.1 144H135.9c-13.3 0-25.5 8.1-30.8 20.2l-64 144C34.6 323.2 41.5 336 53.3 336H458.7c11.8 0 18.7-12.8 12.3-27.8l-64-144c-5.3-12.1-17.5-20.2-30.9-20.2z"/>
-              </svg>`,
-        iconSize: [36, 36],
-        iconAnchor: [18, 18]
+    // Google Maps Initialization
+    const map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 13.0827, lng: 80.2707 },
+        zoom: 13,
+        mapId: 'BIKE_DASHBOARD' // Optional, for advanced markers if enabled
     });
 
-    const marker = L.marker([0, 0], { icon: bikeIcon }).addTo(map);
-    const route = L.polyline([], { color: '#3b82f6', weight: 4 }).addTo(map);
+    // Custom Bike Icon for Google Maps
+    const bikeIcon = {
+        path: "M416 96c26.5 0 48-21.5 48-48S442.5 0 416 0s-48 21.5-48 48 21.5 48 48 48zm-80 64c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zm-128 0c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zM96 96c26.5 0 48-21.5 48-48S122.5 0 96 0 48 21.5 48 48s21.5 48 48 48zm400 352H16c-8.8 0-16 7.2-16 16s7.2 16 16 16h480c8.8 0 16-7.2 16-16s-7.2-16-16-16zm-336-64V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32zm256 0V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32z M376.1 144H135.9c-13.3 0-25.5 8.1-30.8 20.2l-64 144C34.6 323.2 41.5 336 53.3 336H458.7c11.8 0 18.7-12.8 12.3-27.8l-64-144c-5.3-12.1-17.5-20.2-30.9-20.2z",
+        fillColor: "#3b82f6",
+        fillOpacity: 1,
+        strokeWeight: 0,
+        scale: 0.07, // Scale factor for the path
+        anchor: new google.maps.Point(256, 256)
+    };
+
+    const marker = new google.maps.Marker({
+        position: { lat: 0, lng: 0 },
+        map: map,
+        icon: bikeIcon
+    });
+
+    const route = new google.maps.Polyline({
+        path: [],
+        geodesic: true,
+        strokeColor: '#3b82f6',
+        strokeOpacity: 1.0,
+        strokeWeight: 4,
+        map: map
+    });
 
     const statusPanel = document.getElementById("status-panel");
     const connText = document.getElementById("conn-text");
@@ -192,35 +206,37 @@
 
         bikePos = { lat: d.lat, lng: d.lng };
         document.getElementById("bike-latlng").innerText = d.lat.toFixed(4) + "," + d.lng.toFixed(4);
-        const pos = [d.lat, d.lng];
-        marker.setLatLng(pos);
+        
+        const pos = { lat: d.lat, lng: d.lng };
+        marker.setPosition(pos);
 
         // Filter route jumps (if point is > 2km from last point, ignore for route polyline)
-        const lastLatLng = route.getLatLngs().length > 0 ? route.getLatLngs()[route.getLatLngs().length - 1] : null;
+        const currentPath = route.getPath();
         let isOutlier = false;
-        if (lastLatLng) {
-            const dist = getDistance(lastLatLng.lat, lastLatLng.lng, d.lat, d.lng);
+        if (currentPath.getLength() > 0) {
+            const lastLatLng = currentPath.getAt(currentPath.getLength() - 1);
+            const dist = getDistance(lastLatLng.lat(), lastLatLng.lng(), d.lat, d.lng);
             if (dist > 2) isOutlier = true; // 2km jump is suspicious
-            if (dist < 0.005) return; // Ignore if less than 5m move to keep map clean
+            if (dist < 0.005) isOutlier = true; // Ignore small noise for route
         }
 
         if (!isOutlier) {
-            route.addLatLng(pos);
+            currentPath.push(new google.maps.LatLng(d.lat, d.lng));
         }
 
         // Handle Emergency Status
         const banner = document.getElementById("emergency-banner");
         if (d.emergency === true) {
             banner.style.display = "block";
-            // Change color to red
-            document.querySelector('.custom-bike-icon svg').setAttribute('fill', '#ef4444');
+            marker.setIcon({ ...bikeIcon, fillColor: "#ef4444" });
         } else {
             banner.style.display = "none";
-            document.querySelector('.custom-bike-icon svg').setAttribute('fill', '#3b82f6');
+            marker.setIcon(bikeIcon);
         }
 
         if (firstLoad) {
-            map.setView(pos, 16);
+            map.setCenter(pos);
+            map.setZoom(16);
             firstLoad = false;
         } else {
             map.panTo(pos);
