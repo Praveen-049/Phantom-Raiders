@@ -194,11 +194,19 @@
 
 <div id="emergency-banner">
     <i class="fas fa-triangle-exclamation"></i> CRASH DETECTED • EMERGENCY ALERT ACTIVE
+    <a href="tel:112" style="margin-left: 15px;"><button style="background:white; color:var(--danger); border:none; padding:4px 12px; border-radius:6px; font-weight:700; cursor:pointer;">CALL SOS</button></a>
 </div>
 
 <div id="theft-banner" style="position:fixed; top:0; left:0; width:100%; background:#f97316; color:white; text-align:center; padding:12px; font-weight:800; font-size:1rem; z-index:2001; display:none; box-shadow:0 4px 15px rgba(249, 115, 22, 0.4); animation: slideDown 0.5s ease-out, theft-blink 0.8s infinite;">
     <i class="fas fa-hand-fist"></i> THEFT ALERT: BIKE IS MOVING!
-    <button onclick="silenceAlarm()" style="background:white; color:#c2410c; border:none; padding:4px 12px; border-radius:6px; margin-left:15px; font-weight:700; cursor:pointer;">STOP ALARM</button>
+    <a href="tel:112" style="margin-left: 15px;"><button style="background:white; color:#c2410c; border:none; padding:4px 12px; border-radius:6px; font-weight:700; cursor:pointer;">CALL SOS</button></a>
+    <button onclick="silenceAlarm()" style="background:rgba(255,255,255,0.2); color:white; border:1px solid white; padding:4px 12px; border-radius:6px; margin-left:10px; font-weight:700; cursor:pointer;">DISMISS</button>
+</div>
+
+<div id="audio-prompt" style="position:fixed; bottom:20px; right:20px; background:var(--glass); backdrop-filter:blur(10px); padding:15px; border-radius:15px; border:1px solid var(--glass-border); z-index:3000; color:white; display:flex; align-items:center; gap:10px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+    <i class="fas fa-volume-high"></i>
+    <span style="font-size:0.8rem;">Enable Audio Alerts?</span>
+    <button onclick="enableAudio()" style="background:var(--primary); color:white; border:none; padding:5px 12px; border-radius:8px; font-weight:600; cursor:pointer;">YES</button>
 </div>
 
 <style>
@@ -374,6 +382,39 @@
         set(ref(db, "bike/theft"), false);
     };
 
+    // Audio Siren for Dashboard
+    let audioCtx = null;
+    let alarmInterval = null;
+
+    window.enableAudio = () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById("audio-prompt").style.display = "none";
+    };
+
+    function startSiren() {
+        if (alarmInterval || !audioCtx) return;
+        alarmInterval = setInterval(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }, 500);
+    }
+
+    function stopSiren() {
+        if (alarmInterval) {
+            clearInterval(alarmInterval);
+            alarmInterval = null;
+        }
+    }
+
     onValue(ref(db, "bike/locked"), (snap) => {
         isLocked = snap.val() === true;
         if (isLocked) {
@@ -393,8 +434,26 @@
         const theftBanner = document.getElementById("theft-banner");
         if (snap.val() === true) {
             theftBanner.style.display = "block";
+            startSiren();
         } else {
             theftBanner.style.display = "none";
+            stopSiren();
+        }
+    });
+
+    onValue(ref(db, "bike/emergency"), (snap) => {
+        const emergencyBanner = document.getElementById("emergency-banner");
+        if (snap.val() === true) {
+            emergencyBanner.style.display = "block";
+            startSiren();
+            // Turn bike marker red
+            const paths = document.querySelectorAll('.bike-path');
+            paths.forEach(p => p.setAttribute('fill', '#ef4444'));
+        } else {
+            emergencyBanner.style.display = "none";
+            stopSiren();
+            const paths = document.querySelectorAll('.bike-path');
+            paths.forEach(p => p.setAttribute('fill', '#3b82f6'));
         }
     });
 

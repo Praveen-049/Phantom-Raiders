@@ -161,7 +161,14 @@
     <h1 style="font-size: 2.5rem; margin: 10px 0;">CRASH DETECTED!</h1>
     <div class="countdown" id="countdown">10</div>
     <p style="margin-bottom: 30px;">Emergency alert will be sent in <span id="secs">10</span> seconds.</p>
-    <button class="cancel-btn" onclick="cancelCrashAlert()">I AM OK (CANCEL)</button>
+    <div style="display: flex; gap: 15px;">
+        <button class="cancel-btn" onclick="cancelCrashAlert()">I AM OK (CANCEL)</button>
+        <a href="tel:112" style="text-decoration: none;">
+            <button style="background: var(--bg); color: white; border: 2px solid white; padding: 15px 30px; border-radius: 12px; font-weight: 800; cursor: pointer;">
+                <i class="fas fa-phone"></i> CALL SOS
+            </button>
+        </a>
+    </div>
 </div>
 
 <div class="container">
