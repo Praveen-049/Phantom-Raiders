@@ -264,12 +264,29 @@
 
         <!-- Remote Ride Control -->
         <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:10px;">
-            <button class="btn" style="background:var(--success); color:white; border:none; padding:10px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('START')">
-                <i class="fas fa-play"></i> REMOTE START RIDE
-            </button>
-            <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; padding:8px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('STOP')">
-                <i class="fas fa-stop"></i> REMOTE STOP
-            </button>
+            <div id="remote-idle-controls" style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                <button class="btn" style="background:var(--success); color:white; border:none; padding:12px; border-radius:12px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('START')">
+                    <i class="fas fa-play"></i> REMOTE START RIDE
+                </button>
+            </div>
+            
+            <div id="remote-riding-controls" style="display:none; flex-direction:column; gap:10px; width:100%;">
+                <button class="btn" style="background:var(--warning); color:#000; border:none; padding:10px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('PARK_LOCK')">
+                    <i class="fas fa-lock"></i> REMOTE PARK & LOCK
+                </button>
+                <button class="btn" style="background:#25d366; color:white; border:none; padding:10px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteParkNotify()">
+                    <i class="fab fa-whatsapp"></i> REMOTE PARK & NOTIFY
+                </button>
+                <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; padding:8px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('STOP')">
+                    <i class="fas fa-stop"></i> EMERGENCY STOP
+                </button>
+            </div>
+
+            <div id="remote-parked-controls" style="display:none; flex-direction:column; gap:10px; width:100%;">
+                <button class="btn" style="background:var(--primary); color:white; border:none; padding:15px; border-radius:12px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('UNLOCK')">
+                    <i class="fas fa-unlock"></i> REMOTE UNLOCK BIKE
+                </button>
+            </div>
         </div>
 
         <!-- Anti-theft Toggle -->
@@ -435,10 +452,45 @@
     }
 
     // --- Remote Commands ---
+    let currentBikeData = {};
     window.remoteCommand = (cmd) => {
         set(ref(db, "bike/remote_command"), cmd);
         updateTimeline(`Sent Remote ${cmd} command`);
     };
+
+    window.remoteParkNotify = () => {
+        remoteCommand('PARK_LOCK');
+        const { lat, lng, address, rider } = currentBikeData;
+        const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        const msg = `📍 REMOTE PARKED: ${rider || 'Raider'}\nLocation: ${address || 'Unknown'}\nMaps: ${mapUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    onValue(ref(db, "bike"), (snap) => {
+        const d = snap.val();
+        if (!d) return;
+        currentBikeData = d;
+
+        // Update Remote Tool Visibility
+        const idleCtrl = document.getElementById("remote-idle-controls");
+        const rideCtrl = document.getElementById("remote-riding-controls");
+        const parkCtrl = document.getElementById("remote-parked-controls");
+
+        if (idleCtrl && rideCtrl && parkCtrl) {
+            if (d.isParked) {
+                idleCtrl.style.display = "none";
+                rideCtrl.style.display = "none";
+                parkCtrl.style.display = "flex";
+            } else if (d.isRiding) {
+                idleCtrl.style.display = "none";
+                rideCtrl.style.display = "flex";
+                parkCtrl.style.display = "none";
+            } else {
+                idleCtrl.style.display = "flex";
+                rideCtrl.style.display = "none";
+            }
+        }
+    });
 
     onValue(ref(db, "bike/locked"), (snap) => {
         isLocked = snap.val() === true;

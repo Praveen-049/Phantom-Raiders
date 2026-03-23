@@ -61,6 +61,7 @@
             letter-spacing: 3px;
             background: linear-gradient(135deg, #fff 0%, #3b82f6 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -480,6 +481,8 @@
         log("Remote Command: " + cmd);
         if (cmd === "START" && !isRiding) startRide();
         else if (cmd === "STOP" && isRiding) stopRide();
+        else if (cmd === "PARK_LOCK") parkAndLock();
+        else if (cmd === "UNLOCK") unlockBike();
         set(ref(db, "bike/remote_command"), null);
     });
 
