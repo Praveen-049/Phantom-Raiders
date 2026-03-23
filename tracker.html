@@ -134,7 +134,10 @@
         lastAddressUpdate = now;
 
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                headers: { 'Accept-Language': 'en' }
+            });
+            if (!res.ok) throw new Error("HTTP " + res.status);
             const data = await res.json();
             const addr = data.display_name || "Address not found";
             document.getElementById("address").innerText = addr;
@@ -143,6 +146,8 @@
             set(ref(db, "bike/address"), addr);
         } catch (e) {
             console.error("Address fetch failed", e);
+            document.getElementById("address").innerText = "Lookup failed: " + e.message;
+            logError("Address API: " + e.message);
         }
     }
 

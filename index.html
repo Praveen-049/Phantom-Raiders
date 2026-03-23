@@ -39,7 +39,7 @@
     </div>
 
     <div class="box">
-        Points Tracked: <div id="points" class="value">0</div>
+        Distance from Bike: <div id="distance" class="value">calculating...</div>
     </div>
 
     <div class="box">
@@ -92,11 +92,41 @@
     const statusPanel = document.getElementById("status-panel");
     const connText = document.getElementById("conn-text");
     const speedEl = document.getElementById("speed");
-    const pointsEl = document.getElementById("points");
+    const distanceEl = document.getElementById("distance");
     const timeEl = document.getElementById("sync-time");
 
-    let count = 0;
     let firstLoad = true;
+    let bikePos = null;
+    let userPos = null;
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radius of the earth in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const d = R * c; // Distance in km
+        return d;
+    }
+
+    function updateDistanceUI() {
+        if (bikePos && userPos) {
+            const dist = getDistance(userPos.lat, userPos.lng, bikePos.lat, bikePos.lng);
+            if (dist < 1) {
+                distanceEl.innerText = Math.round(dist * 1000) + " m";
+            } else {
+                distanceEl.innerText = dist.toFixed(2) + " km";
+            }
+        }
+    }
+
+    // Track Dashboard User's Location
+    navigator.geolocation.watchPosition((pos) => {
+        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        updateDistanceUI();
+    }, (err) => console.log("User Geolocation error:", err));
 
     // Connection monitoring
     onValue(ref(db, ".info/connected"), (snap) => {
@@ -113,6 +143,7 @@
         const d = snap.val();
         if (!d || !d.lat) return;
 
+        bikePos = { lat: d.lat, lng: d.lng };
         const pos = [d.lat, d.lng];
         marker.setLatLng(pos);
         route.addLatLng(pos);
@@ -131,8 +162,7 @@
             document.getElementById("address").innerText = d.address;
         }
 
-        count++;
-        pointsEl.innerText = count;
+        updateDistanceUI();
     });
 
 </script>
