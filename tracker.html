@@ -134,6 +134,12 @@
         .label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
         .value { font-size: 1.2rem; font-weight: 700; }
 
+        @keyframes pulse-warning {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
         #crash-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -198,7 +204,7 @@
                 </div>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <div id="park-options" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
                 <button class="btn" style="background: var(--glass-border); color: white;" onclick="parkAndLock()">
                     <i class="fas fa-lock"></i> PARK & LOCK
                 </button>
@@ -206,6 +212,16 @@
                     <i class="fab fa-whatsapp"></i> PARK, LOCK & NOTIFY
                 </button>
             </div>
+        </div>
+
+        <div id="parked-view" style="display:none; flex-direction:column; gap:20px; align-items:center; margin-top:10px;">
+            <div style="width:100px; height:100px; border-radius:50%; background:rgba(245,158,11,0.1); border:4px solid var(--warning); display:flex; align-items:center; justify-content:center; color:var(--warning); animation: pulse-warning 2s infinite;">
+                <i class="fas fa-parking fa-3x"></i>
+            </div>
+            <div style="font-weight:700; color:var(--warning);">BIKE IS PARKED & ARMED</div>
+            <button class="btn" style="background:var(--success); color:white; width:100%; border-radius:20px; padding:20px;" onclick="unlockBike()">
+                <i class="fas fa-unlock"></i> UNLOCK BIKE
+            </button>
         </div>
 
         <div style="display:flex; gap:8px; justify-content:center; margin-top:10px;">
@@ -303,9 +319,7 @@
 
     window.parkLockNotify = () => {
         // First perform park and lock
-        stopRide();
-        set(ref(db, "bike/isParked"), true);
-        set(ref(db, "bike/locked"), true);
+        parkAndLock();
         
         // WhatsApp Integration
         const lat = currentCoords ? currentCoords.lat : 0;
@@ -318,22 +332,34 @@
         log("Parking notification sent.");
     };
 
+    window.unlockBike = () => {
+        set(ref(db, "bike/locked"), false);
+        set(ref(db, "bike/isParked"), false);
+        set(ref(db, "bike/theft"), false);
+        log("Bike Unlocked.");
+    };
+
     function updateUI(riding) {
         const btn = document.getElementById("start-ride-btn");
         const icon = document.getElementById("play-icon");
         const text = document.getElementById("btn-text");
         const stats = document.getElementById("live-stats");
+        const parkedView = document.getElementById("parked-view");
 
         if (riding) {
             btn.classList.add("riding");
+            btn.style.display = "flex";
             icon.className = "fas fa-stop fa-2x";
             text.innerText = "END RIDE";
             stats.style.display = "block";
+            parkedView.style.display = "none";
         } else {
             btn.classList.remove("riding");
+            btn.style.display = "flex";
             icon.className = "fas fa-play fa-2x";
             text.innerText = "START RIDE";
             stats.style.display = "none";
+            // Note: parkedView display handled by Firebase listener
         }
     }
 
@@ -416,6 +442,23 @@
         document.getElementById("lock-badge").style.display = isLocked ? "block" : "none";
         if (!isLocked && isTheftAlert) {
             set(ref(db, "bike/theft"), false);
+        }
+    });
+
+    onValue(ref(db, "bike/isParked"), (s) => {
+        const isParked = s.val() === true;
+        const parkedView = document.getElementById("parked-view");
+        const rideBtn = document.getElementById("start-ride-btn");
+        const liveStats = document.getElementById("live-stats");
+
+        if (isParked) {
+            parkedView.style.display = "flex";
+            rideBtn.style.display = "none";
+            liveStats.style.display = "none";
+        } else {
+            parkedView.style.display = "none";
+            rideBtn.style.display = "flex";
+            // liveStats naturally depends on isRiding
         }
     });
 
