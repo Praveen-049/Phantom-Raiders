@@ -52,6 +52,17 @@
         }
         .label { color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
         .value { font-weight: 700; color: white; }
+        .address-box {
+            background: var(--box);
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            min-height: 40px;
+        }
+        #address { color: #3b82f6; font-weight: 600; }
         #error-log {
             margin-top: 15px;
             font-size: 0.7rem;
@@ -80,6 +91,11 @@
     <div class="box">
         <span class="label">Speed</span>
         <span class="value"><span id="speed">0</span> <small>km/h</small></span>
+    </div>
+
+    <div class="address-box">
+        <div class="label" style="margin-bottom: 5px;">Current Address</div>
+        <div id="address">Fetching address...</div>
     </div>
 
     <div id="error-log"></div>
@@ -111,6 +127,25 @@
         errorLogEl.appendChild(div);
     }
 
+    let lastAddressUpdate = 0;
+    async function updateAddress(lat, lng) {
+        const now = Date.now();
+        if (now - lastAddressUpdate < 5000) return; // Limit to once every 5 seconds
+        lastAddressUpdate = now;
+
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+            const data = await res.json();
+            const addr = data.display_name || "Address not found";
+            document.getElementById("address").innerText = addr;
+            
+            // Also sync address to Firebase so dashboard can see it
+            set(ref(db, "bike/address"), addr);
+        } catch (e) {
+            console.error("Address fetch failed", e);
+        }
+    }
+
     try {
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -135,6 +170,8 @@
             document.getElementById("lng").innerText = lng.toFixed(6);
             document.getElementById("speed").innerText = Math.round(speed);
             gpsStatusEl.innerText = "GPS: Active Accuracy: " + Math.round(pos.coords.accuracy) + "m";
+
+            updateAddress(lat, lng);
 
             set(ref(db, "bike"), {
                 lat: lat,

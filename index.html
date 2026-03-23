@@ -42,6 +42,10 @@
         Points Tracked: <div id="points" class="value">0</div>
     </div>
 
+    <div class="box">
+        Address: <div id="address" style="font-size: 0.8rem; color: #3b82f6; font-weight: 600; margin-top: 5px;">Fetching...</div>
+    </div>
+
     <div id="sync-time">Last update: --:--</div>
 </div>
 
@@ -71,7 +75,18 @@
         attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    const marker = L.marker([0, 0]).addTo(map);
+    // Custom Bike Icon
+    const bikeIcon = L.divIcon({
+        className: 'custom-bike-icon',
+        html: `<svg viewBox="0 0 512 512" width="36" height="36" fill="#3b82f6">
+                <path d="M416 96c26.5 0 48-21.5 48-48S442.5 0 416 0s-48 21.5-48 48 21.5 48 48 48zm-80 64c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zm-128 0c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zM96 96c26.5 0 48-21.5 48-48S122.5 0 96 0 48 21.5 48 48s21.5 48 48 48zm400 352H16c-8.8 0-16 7.2-16 16s7.2 16 16 16h480c8.8 0 16-7.2 16-16s-7.2-16-16-16zm-336-64V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32zm256 0V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32z"/>
+                <path d="M376.1 144H135.9c-13.3 0-25.5 8.1-30.8 20.2l-64 144C34.6 323.2 41.5 336 53.3 336H458.7c11.8 0 18.7-12.8 12.3-27.8l-64-144c-5.3-12.1-17.5-20.2-30.9-20.2z"/>
+              </svg>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+    });
+
+    const marker = L.marker([0, 0], { icon: bikeIcon }).addTo(map);
     const route = L.polyline([], { color: '#3b82f6', weight: 4 }).addTo(map);
 
     const statusPanel = document.getElementById("status-panel");
@@ -112,6 +127,10 @@
         speedEl.innerText = Math.round(d.speed || 0) + " km/h";
         timeEl.innerText = "Last update: " + new Date(d.time).toLocaleTimeString();
         
+        if (d.address) {
+            document.getElementById("address").innerText = d.address;
+        }
+
         count++;
         pointsEl.innerText = count;
     });
