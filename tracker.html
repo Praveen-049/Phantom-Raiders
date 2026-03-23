@@ -119,8 +119,14 @@
         <p>Mount phone and start tracking</p>
 
         <div id="status" class="status inactive">Tracking: Inactive</div>
+        <div id="connection" style="font-size: 0.75rem; margin-bottom: 1rem; color: #94a3b8;">Firebase: Connecting...
+        </div>
 
         <button id="startBtn">Start Tracking</button>
+
+        <div id="error-log"
+            style="margin-top: 1rem; font-size: 0.75rem; color: #ef4444; text-align: left; max-height: 100px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px; display: none;">
+        </div>
 
         <div class="stats">
             <div class="stat-box">
@@ -144,7 +150,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         // Replace with actual firebaseConfig passed in the existing file
         const firebaseConfig = {
@@ -154,22 +160,49 @@
             storageBucket: "phantom-raiders.firebasestorage.app",
             messagingSenderId: "1055222458613",
             appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
-            measurementId: "G-3GX5D8RDMW"
+            measurementId: "G-3GX5D8RDMW",
+            databaseURL: "https://phantom-raiders-default-rtdb.firebaseio.com"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase();
-        const bikeRef = ref(db, 'bike');
+        let app, db, bikeRef;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getDatabase(app);
+            bikeRef = ref(db, 'bike');
+        } catch (err) {
+            logError("Firebase Init Failed: " + err.message);
+        }
 
         let watchId = null;
         let updateCount = 0;
 
         const startBtn = document.getElementById('startBtn');
         const statusDiv = document.getElementById('status');
+        const connectionDiv = document.getElementById('connection');
+        const errorLog = document.getElementById('error-log');
         const latVal = document.getElementById('lat');
         const lonVal = document.getElementById('lon');
         const speedVal = document.getElementById('speed');
         const countVal = document.getElementById('count');
+
+        function logError(msg) {
+            errorLog.style.display = 'block';
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            errorLog.prepend(entry);
+        }
+
+        // Monitor Firebase Connection
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                connectionDiv.textContent = "Firebase: Connected ✓";
+                connectionDiv.style.color = "#34d399";
+            } else {
+                connectionDiv.textContent = "Firebase: Disconnected ✗";
+                connectionDiv.style.color = "#ef4444";
+            }
+        });
 
         startBtn.addEventListener('click', () => {
             if (watchId === null) {
@@ -180,7 +213,14 @@
         });
 
         function startTracking() {
+            if (!window.isSecureContext) {
+                logError("Insecure Context: Geolocation requires HTTPS or localhost.");
+                alert("Tracking requires a secure (HTTPS) connection.");
+                return;
+            }
+
             if (!navigator.geolocation) {
+                logError("Geolocation not supported by browser.");
                 alert('Geolocation is not supported by your browser');
                 return;
             }
@@ -212,7 +252,12 @@
                         lng: longitude,
                         speed: parseFloat(speedKmH),
                         timestamp: timestamp
-                    }).catch(err => console.error("Firebase Error:", err));
+                    }).then(() => {
+                        console.log("Data sent to Firebase");
+                    }).catch(err => {
+                        logError("Firebase Set Error: " + err.message);
+                        console.error("Firebase Error:", err);
+                    });
                 },
                 (error) => {
                     console.error("GPS Error:", error);
