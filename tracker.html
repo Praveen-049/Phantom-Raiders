@@ -71,6 +71,85 @@
             overflow-y: auto;
             text-align: left;
         }
+
+        /* Crash Overlay */
+        #crash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(239, 68, 68, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+            padding: 20px;
+        }
+        #crash-overlay h1 { font-size: 3rem; margin-bottom: 10px; }
+        #crash-overlay p { font-size: 1.2rem; margin-bottom: 30px; }
+        .cancel-btn {
+            background: white;
+            color: var(--danger);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        #crash-timer { font-size: 4rem; font-weight: 800; margin-bottom: 20px; }
+
+        /* Settings Card */
+        .settings-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 15px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        
+        .status-indicator { font-size: 0.75rem; color: #94a3b8; }
+        .status-active { color: var(--success); font-weight: bold; }
+        .status-idle { color: #64748b; }
     </style>
 </head>
 <body>
@@ -99,6 +178,30 @@
     </div>
 
     <div id="error-log"></div>
+    <button onclick="triggerCrashAlert()" style="background:none; border:none; color:#334155; font-size:0.6rem; cursor:pointer; margin-top:10px;">[TEST CRASH]</button>
+</div>
+
+<div class="settings-card">
+    <div class="toggle-row">
+        <span style="font-weight: 600; font-size: 0.9rem;">Crash Detection</span>
+        <label class="switch">
+            <input type="checkbox" id="crash-toggle" onchange="toggleCrashDetection()">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="status-indicator">
+        Status: <span id="crash-status" class="status-idle">Idle</span>
+    </div>
+    <div class="status-indicator" style="font-size: 0.7rem;">
+        Last: <span id="last-crash-time">Never</span>
+    </div>
+</div>
+
+<div id="crash-overlay">
+    <h1>CRASH DETECTED!</h1>
+    <p>Sending emergency alert in...</p>
+    <div id="crash-timer">10</div>
+    <button class="cancel-btn" onclick="cancelCrash()">I AM OKAY (CANCEL)</button>
 </div>
 
 <script type="module">
@@ -197,6 +300,197 @@
 
     } catch (e) {
         logError("Init Error: " + e.message);
+    }
+
+    // --- REFINED CRASH DETECTION LOGIC ---
+    let crashDetectionEnabled = false;
+    let crashDetected = false;
+    let timerInterval = null;
+    let countdown = 10;
+    
+    // Limits
+    const ACC_SPIKE = 18; // m/s²
+    const TILT_ANGLE_CHANGE = 60; // degrees
+    const TILT_TIME_LIMIT = 500; // ms
+    const SUSTAINED_TILT_ANGLE = 70; // degrees
+    const SUSTAINED_TILT_TIME = 3000; // ms
+    
+    // Tracking state
+    let lastOrientation = { beta: 0, gamma: 0, time: 0 };
+    let tiltHistory = [];
+    let sustainedTiltStart = null;
+    let sensorInterval = null;
+
+    window.toggleCrashDetection = async function() {
+        const toggle = document.getElementById("crash-toggle");
+        if (toggle.checked) {
+            const permission = await initCrashDetection();
+            if (permission) {
+                crashDetectionEnabled = true;
+                document.getElementById("crash-status").innerText = "Active";
+                document.getElementById("crash-status").className = "status-active";
+            } else {
+                toggle.checked = false;
+                logError("Sensor permissions denied.");
+            }
+        } else {
+            crashDetectionEnabled = false;
+            document.getElementById("crash-status").innerText = "Idle";
+            document.getElementById("crash-status").className = "status-idle";
+            stopSensors();
+        }
+    };
+
+    async function initCrashDetection() {
+        try {
+            // Request iOS motion permission
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                const response = await DeviceMotionEvent.requestPermission();
+                if (response !== 'granted') return false;
+            }
+            
+            // Start battery-friendly interval (200ms check)
+            startSensors();
+            return true;
+        } catch (e) {
+            logError("Crash Init Error: " + e.message);
+            return false;
+        }
+    }
+
+    function startSensors() {
+        window.addEventListener('devicemotion', handleMotion);
+        window.addEventListener('deviceorientation', handleOrientation);
+        sensorInterval = setInterval(detectCrash, 200);
+    }
+
+    function stopSensors() {
+        window.removeEventListener('devicemotion', handleMotion);
+        window.removeEventListener('deviceorientation', handleOrientation);
+        if (sensorInterval) clearInterval(sensorInterval);
+    }
+
+    let currentMotion = null;
+    let currentOrientation = null;
+
+    function handleMotion(event) {
+        if (!crashDetectionEnabled) return;
+        currentMotion = event.accelerationIncludingGravity;
+    }
+
+    function handleOrientation(event) {
+        if (!crashDetectionEnabled) return;
+        currentOrientation = {
+            beta: event.beta,
+            gamma: event.gamma,
+            time: performance.now()
+        };
+    }
+
+    function detectCrash() {
+        if (!crashDetectionEnabled || crashDetected) return;
+
+        const now = performance.now();
+
+        // 1. Acceleration Spike
+        if (currentMotion) {
+            const acc = Math.sqrt(currentMotion.x**2 + currentMotion.y**2 + currentMotion.z**2);
+            if (acc > ACC_SPIKE) {
+                console.log("Crash detected: Acceleration spike", acc);
+                triggerCrashAlert();
+                return;
+            }
+        }
+
+        // 2. Tilt Changes
+        if (currentOrientation) {
+            const tilt = Math.max(Math.abs(currentOrientation.beta || 0), Math.abs(currentOrientation.gamma || 0));
+            
+            // Sudden tilt change (> 60 deg in 500ms)
+            tiltHistory.push(currentOrientation);
+            tiltHistory = tiltHistory.filter(h => now - h.time <= TILT_TIME_LIMIT);
+            
+            if (tiltHistory.length > 1) {
+                const oldest = tiltHistory[0];
+                const deltaBeta = Math.abs(currentOrientation.beta - oldest.beta);
+                const deltaGamma = Math.abs(currentOrientation.gamma - oldest.gamma);
+                if (deltaBeta > TILT_ANGLE_CHANGE || deltaGamma > TILT_ANGLE_CHANGE) {
+                    console.log("Crash detected: Sudden tilt");
+                    triggerCrashAlert();
+                    return;
+                }
+            }
+
+            // Sustained tilt (> 70 deg for 3s)
+            if (tilt > SUSTAINED_TILT_ANGLE) {
+                if (!sustainedTiltStart) sustainedTiltStart = now;
+                if (now - sustainedTiltStart > SUSTAINED_TILT_TIME) {
+                    console.log("Crash detected: Sustained tilt");
+                    triggerCrashAlert();
+                    return;
+                }
+            } else {
+                sustainedTiltStart = null;
+            }
+        }
+    }
+
+    window.triggerCrashAlert = function() {
+        if (crashDetected) return;
+        crashDetected = true;
+        countdown = 10;
+        
+        document.getElementById("crash-overlay").style.display = "flex";
+        document.getElementById("crash-timer").innerText = countdown;
+        document.getElementById("last-crash-time").innerText = new Date().toLocaleTimeString();
+
+        timerInterval = setInterval(() => {
+            countdown--;
+            document.getElementById("crash-timer").innerText = countdown;
+            if (countdown <= 0) {
+                clearInterval(timerInterval);
+                sendCrashLocation();
+            }
+        }, 1000);
+    }
+
+    window.cancelCrash = function() {
+        crashDetected = false;
+        clearInterval(timerInterval);
+        document.getElementById("crash-overlay").style.display = "none";
+        // Reset buffers
+        tiltHistory = [];
+        sustainedTiltStart = null;
+    }
+
+    async function sendCrashLocation() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const timestamp = Date.now();
+
+            // Send to Firebase
+            set(ref(db, "bike/crash"), {
+                detected: true,
+                time: timestamp,
+                lat: lat,
+                lng: lng,
+                status: "EMERGENCY_ALERT_SENT"
+            });
+
+            // Update existing tracker location too
+            set(ref(db, "bike"), {
+                lat: lat,
+                lng: lng,
+                speed: 0,
+                time: timestamp,
+                emergency: true
+            });
+
+            alert("EMERGENCY ALERT SENT TO FIREBASE");
+        }, (err) => {
+            logError("Crash Location Error: " + err.message);
+        }, { enableHighAccuracy: true });
     }
 
 </script>
