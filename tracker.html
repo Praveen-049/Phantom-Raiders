@@ -257,6 +257,7 @@
     let isLocked = false;
     let isTheftAlert = false;
     let lastLockTime = 0;
+    let sensorsInitialized = false;
     let watchId = null;
     let audioCtx = null;
     let alarmInterval = null;
@@ -265,8 +266,17 @@
     let currentAddress = "---";
 
     // --- Login ---
-    window.doLogin = () => {
+    window.doLogin = async () => {
         riderName = document.getElementById("rider-name").value.trim() || "Raider";
+        
+        // Pre-request sensor permissions on login to unlock them for the session
+        try {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                await DeviceMotionEvent.requestPermission();
+            }
+            initSensors();
+        } catch(e) { log("Sensor init failed: " + e.message); }
+
         document.getElementById("display-rider").innerText = "Rider: " + riderName;
         document.getElementById("login-view").style.display = "none";
         document.getElementById("ride-view").style.display = "flex";
@@ -274,6 +284,13 @@
         set(ref(db, "bike/isParked"), false);
         log("Logged in as " + riderName);
     };
+
+    function initSensors() {
+        if (sensorsInitialized) return;
+        window.addEventListener('devicemotion', handleMotion);
+        sensorsInitialized = true;
+        log("Sensors Armed");
+    }
 
     // --- Ride Control ---
     window.toggleRide = async () => {
@@ -286,16 +303,14 @@
 
     async function startRide() {
         try {
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                const p = await DeviceMotionEvent.requestPermission();
-                if (p !== 'granted') return alert("Permission denied.");
-            }
+            // Re-check permission if needed (though initSensors handles it)
+            if (!sensorsInitialized) initSensors();
+            
             isRiding = true;
             updateUI(true);
             set(ref(db, "bike/isRiding"), true);
             set(ref(db, "bike/isParked"), false);
             watchId = navigator.geolocation.watchPosition(updatePosition, (e) => log(e.message), { enableHighAccuracy:true });
-            window.addEventListener('devicemotion', handleMotion);
             log("Ride Started");
         } catch (e) { log(e.message); }
     }
@@ -306,7 +321,7 @@
         set(ref(db, "bike/speed"), 0);
         set(ref(db, "bike/isRiding"), false);
         if (watchId) navigator.geolocation.clearWatch(watchId);
-        window.removeEventListener('devicemotion', handleMotion);
+        // Note: devicemotion listener is NO LONGER removed to allow anti-theft
         log("Ride Ended");
     }
 
