@@ -567,6 +567,7 @@
 
         // 4. Map & Stats
         if (d.lat && d.lng) {
+            bikePos = { lat: d.lat, lng: d.lng };
             const pos = [d.lat, d.lng];
             marker.setLatLng(pos);
             
@@ -584,7 +585,7 @@
                 route.addLatLng(pos);
             }
             
-            document.getElementById("bike-latlng").innerText = d.lat.toFixed(4) + "," + d.lng.toFixed(4);
+            document.getElementById("bike-latlng").innerText = (d.lat && d.lng) ? d.lat.toFixed(4) + "," + d.lng.toFixed(4) : "---";
         }
 
         if (d.rider) document.getElementById("rider-label").innerText = "Rider: " + d.rider;
@@ -609,7 +610,9 @@
         }
 
         speedEl.innerText = Math.round(d.speed || 0) + " km/h";
-        timeEl.innerText = "Last sync: " + new Date(d.time).toLocaleTimeString();
+        if (d.time) {
+            timeEl.innerText = "Last sync: " + new Date(d.time).toLocaleTimeString();
+        }
         if (d.address) document.getElementById("address").innerText = d.address;
         
         updateDistanceUI();

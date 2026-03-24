@@ -362,9 +362,9 @@
 
     window.parkLockNotify = () => {
         parkAndLock();
-        const lat = currentCoords ? currentCoords.lat : 0;
-        const lng = currentCoords ? currentCoords.lng : 0;
-        const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        const lat = (currentCoords && currentCoords.lat) ? currentCoords.lat : 0;
+        const lng = (currentCoords && currentCoords.lng) ? currentCoords.lng : 0;
+        const mapUrl = (lat && lng) ? `https://www.google.com/maps?q=${lat},${lng}` : "Location Unknown";
         const msg = `📍 BIKE PARKED & SECURED\nRider: ${riderName}\nLocation: ${currentAddress}\nMaps: ${mapUrl}\nAnti-theft: ACTIVE 🛡️`;
         const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
         window.open(waUrl, '_blank');
@@ -409,8 +409,13 @@
         const s = speed ? speed * 3.6 : 0;
         
         document.getElementById("speed").innerText = Math.round(s);
-        document.getElementById("accuracy").innerText = Math.round(accuracy);
-        document.getElementById("gps-badge").innerText = `GPS ACTIVE (${Math.round(accuracy)}m)`;
+        if (accuracy) {
+            document.getElementById("accuracy").innerText = Math.round(accuracy);
+            document.getElementById("gps-badge").innerText = `GPS ACTIVE (${Math.round(accuracy)}m)`;
+        } else {
+            document.getElementById("accuracy").innerText = "--";
+            document.getElementById("gps-badge").innerText = `GPS ACTIVE`;
+        }
 
         if (lastPos) {
             const d = getDistance(lastPos.lat, lastPos.lng, lat, lng);
@@ -442,12 +447,16 @@
 
     async function fetchAddress(lat, lng) {
         try {
-            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+                headers: { 'User-Agent': 'Phantom-Raiders-App' }
+            });
             const d = await r.json();
-            currentAddress = d.display_name.split(',').slice(0,3).join(',');
-            document.getElementById("address").innerText = currentAddress;
-            set(ref(db, "bike/address"), currentAddress);
-        } catch(e) {}
+            if (d && d.display_name) {
+                currentAddress = d.display_name.split(',').slice(0,3).join(',');
+                document.getElementById("address").innerText = currentAddress;
+                set(ref(db, "bike/address"), currentAddress);
+            }
+        } catch(e) { console.error("Geocoding error:", e); }
     }
 
     // --- Motion / Safety ---
