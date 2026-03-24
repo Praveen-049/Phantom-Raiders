@@ -278,6 +278,7 @@
     let currentAddress = "---";
     let rideDistance = 0;
     let lastPos = null;
+    let theftCounter = 0;
 
     // --- Login ---
     window.doLogin = async () => {
@@ -462,10 +463,22 @@
     // --- Motion / Safety ---
     function handleMotion(event) {
         if (isLocked && !isTheftAlert && (Date.now() - lastLockTime > 5000)) {
-            const acc = event.accelerationIncludingGravity;
-            if (acc) {
+            // Prefer linear acceleration (no gravity) for theft detection if available
+            const acc = event.acceleration || event.accelerationIncludingGravity;
+            if (acc && acc.x !== null) {
                 const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-                if (Math.abs(mag - 9.8) > 3.0) set(ref(db, "bike/theft"), true);
+                const threshold = event.acceleration ? 2.0 : 4.0; // Higher threshold if including gravity
+                const delta = event.acceleration ? mag : Math.abs(mag - 9.8);
+
+                if (delta > threshold) {
+                    theftCounter++;
+                    if (theftCounter >= 3) {
+                        set(ref(db, "bike/theft"), true);
+                        theftCounter = 0;
+                    }
+                } else {
+                    theftCounter = Math.max(0, theftCounter - 1); // Cooling down
+                }
             }
         }
         if (!isRiding) return;
