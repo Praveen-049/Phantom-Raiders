@@ -461,11 +461,11 @@
 
     // --- Motion / Safety ---
     function handleMotion(event) {
-        if (isLocked && !isTheftAlert && (Date.now() - lastLockTime > 1500)) {
+        if (isLocked && !isTheftAlert && (Date.now() - lastLockTime > 5000)) {
             const acc = event.accelerationIncludingGravity;
             if (acc) {
                 const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-                if (Math.abs(mag - 9.8) > 0.8) set(ref(db, "bike/theft"), true);
+                if (Math.abs(mag - 9.8) > 3.0) set(ref(db, "bike/theft"), true);
             }
         }
         if (!isRiding) return;
