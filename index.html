@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phantom Raiders | Bike Dashboard</title>
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <!-- Leaflet -->
@@ -14,26 +15,29 @@
 
     <style>
         :root {
-            --primary: #a855f7; /* Bright Purple */
-            --accent: #fbbf24;  /* Gold */
+            --primary: #a855f7;
+            /* Bright Purple */
+            --accent: #fbbf24;
+            /* Gold */
             --danger: #ef4444;
             --success: #10b981;
-            --bg: #050505;      /* Inky Black */
+            --bg: #050505;
+            /* Inky Black */
             --glass: rgba(15, 10, 25, 0.85);
             --glass-border: rgba(168, 85, 247, 0.2);
         }
 
-        body { 
-            margin: 0; 
-            font-family: 'Outfit', sans-serif; 
-            background: var(--bg); 
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
             color: white;
             overflow: hidden;
         }
 
-        #map { 
-            height: 100vh; 
-            width: 100%; 
+        #map {
+            height: 100vh;
+            width: 100%;
             background: #111;
         }
 
@@ -48,19 +52,19 @@
             padding: 24px;
             border-radius: 20px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             z-index: 1000;
             width: 260px;
             transition: all 0.3s ease;
         }
 
-        .header { 
-            display: flex; 
+        .header {
+            display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
         }
-        
+
         .brand {
             font-weight: 800;
             font-size: 1.2rem;
@@ -84,6 +88,7 @@
             border-radius: 20px;
             text-transform: uppercase;
         }
+
         .pulse {
             width: 6px;
             height: 6px;
@@ -91,10 +96,22 @@
             border-radius: 50%;
             animation: pulse-ring 1.5s infinite;
         }
+
         @keyframes pulse-ring {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.5; }
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
         }
 
         /* Stats List */
@@ -103,11 +120,13 @@
             flex-direction: column;
             gap: 15px;
         }
+
         .stat-item {
             display: flex;
             align-items: center;
             gap: 12px;
         }
+
         .icon-box {
             width: 36px;
             height: 36px;
@@ -120,31 +139,34 @@
             font-size: 1rem;
             border: 1px solid var(--glass-border);
         }
+
         .stat-content {
             flex: 1;
         }
-        .label { 
-            color: #94a3b8; 
-            font-size: 0.7rem; 
-            text-transform: uppercase; 
+
+        .label {
+            color: #94a3b8;
+            font-size: 0.7rem;
+            text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 2px;
         }
-        .value { 
-            font-weight: 600; 
-            color: white; 
-            font-size: 1.1rem; 
+
+        .value {
+            font-weight: 600;
+            color: white;
+            font-size: 1.1rem;
         }
 
-        #address { 
-            color: var(--primary); 
-            font-size: 0.85rem; 
+        #address {
+            color: var(--primary);
+            font-size: 0.85rem;
             line-height: 1.4;
         }
 
-        #sync-time { 
-            font-size: 0.7rem; 
-            color: #64748b; 
+        #sync-time {
+            font-size: 0.7rem;
+            color: #64748b;
             margin-top: 15px;
             text-align: right;
         }
@@ -166,26 +188,48 @@
             box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
             animation: slideDown 0.5s ease-out, emergency-blink 0.8s infinite;
         }
+
         @keyframes slideDown {
-            from { transform: translateY(-100%); }
-            to { transform: translateY(0); }
+            from {
+                transform: translateY(-100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
         }
+
         @keyframes emergency-blink {
-            0% { background: #ef4444; }
-            50% { background: #991b1b; }
-            100% { background: #ef4444; }
+            0% {
+                background: #ef4444;
+            }
+
+            50% {
+                background: #991b1b;
+            }
+
+            100% {
+                background: #ef4444;
+            }
         }
 
         /* Leaflet Overrides */
-        .leaflet-container { background: #000 !important; }
-        .leaflet-bar { border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; }
-        .leaflet-bar a { 
-            background: var(--glass) !important; 
-            color: white !important; 
-            border-bottom: 1px solid var(--glass-border) !important; 
+        .leaflet-container {
+            background: #000 !important;
+        }
+
+        .leaflet-bar {
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .leaflet-bar a {
+            background: var(--glass) !important;
+            color: white !important;
+            border-bottom: 1px solid var(--glass-border) !important;
             backdrop-filter: blur(5px) !important;
         }
-        
+
         #debug-info {
             font-size: 0.6rem;
             color: #64748b;
@@ -196,12 +240,21 @@
         }
 
         /* Custom Scrollbar for Missions */
-        #mission-list::-webkit-scrollbar { width: 4px; }
-        #mission-list::-webkit-scrollbar-track { background: transparent; }
-        #mission-list::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
-        
+        #mission-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #mission-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #mission-list::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
         .mission-card {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--glass-border);
             border-radius: 12px;
             padding: 10px;
@@ -211,432 +264,480 @@
             margin-bottom: 5px;
             transition: all 0.2s;
         }
-        .mission-card:hover { background: rgba(168, 85, 247, 0.05); border-color: var(--primary); }
+
+        .mission-card:hover {
+            background: rgba(168, 85, 247, 0.05);
+            border-color: var(--primary);
+        }
     </style>
 </head>
+
 <body>
 
-<div id="emergency-banner">
-    <i class="fas fa-triangle-exclamation"></i> CRASH DETECTED • EMERGENCY ALERT ACTIVE
-    <a href="tel:112" style="margin-left: 15px;"><button style="background:white; color:var(--danger); border:none; padding:4px 12px; border-radius:6px; font-weight:700; cursor:pointer;">CALL SOS</button></a>
-</div>
-
-<div id="theft-banner" style="position:fixed; top:0; left:0; width:100%; background:#f97316; color:white; text-align:center; padding:12px; font-weight:800; font-size:1rem; z-index:2001; display:none; box-shadow:0 4px 15px rgba(249, 115, 22, 0.4); animation: slideDown 0.5s ease-out, theft-blink 0.8s infinite;">
-    <i class="fas fa-hand-fist"></i> THEFT ALERT: BIKE IS MOVING!
-    <a href="tel:112" style="margin-left: 15px;"><button style="background:white; color:#c2410c; border:none; padding:4px 12px; border-radius:6px; font-weight:700; cursor:pointer;">CALL SOS</button></a>
-    <button onclick="silenceAlarm()" style="background:rgba(255,255,255,0.2); color:white; border:1px solid white; padding:4px 12px; border-radius:6px; margin-left:10px; font-weight:700; cursor:pointer;">DISMISS</button>
-</div>
-
-<div id="audio-prompt" style="position:fixed; bottom:20px; right:20px; background:var(--glass); backdrop-filter:blur(10px); padding:15px; border-radius:15px; border:1px solid var(--glass-border); z-index:3000; color:white; display:flex; align-items:center; gap:10px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-    <i class="fas fa-volume-high"></i>
-    <span style="font-size:0.8rem;">Enable Audio Alerts?</span>
-    <button onclick="enableAudio()" style="background:var(--primary); color:white; border:none; padding:5px 12px; border-radius:8px; font-weight:600; cursor:pointer;">YES</button>
-</div>
-
-<style>
-    @keyframes theft-blink {
-        0% { background: #f97316; }
-        50% { background: #ea580c; }
-        100% { background: #f97316; }
-    }
-</style>
-
-<div class="glass-panel">
-    <div class="header">
-        <div class="brand">PHANTOM</div>
-        <div class="live-tag">
-            <div class="pulse"></div> LIVE
-        </div>
+    <div id="emergency-banner">
+        <i class="fas fa-triangle-exclamation"></i> CRASH DETECTED • EMERGENCY ALERT ACTIVE
+        <a href="tel:112" style="margin-left: 15px;"><button
+                style="background:white; color:var(--danger); border:none; padding:4px 12px; border-radius:6px; font-weight:700; cursor:pointer;">CALL
+                SOS</button></a>
+        <button onclick="silenceEmergency()"
+            style="background:rgba(255,255,255,0.2); color:white; border:1px solid white; padding:4px 12px; border-radius:6px; margin-left:10px; font-weight:700; cursor:pointer;">DISMISS</button>
     </div>
 
-    <div class="stat-grid">
-        <!-- Status Info -->
-        <div class="stat-item" style="border-bottom:1px solid var(--glass-border); padding-bottom:15px; margin-bottom:10px;">
-            <div id="status-pulse" class="live-pulse"></div>
-            <div class="stat-content">
-                <div class="label" id="rider-label">System Active</div>
-                <div id="ride-status" class="value" style="color:var(--success);">LIVE TRACKING</div>
+    <div id="theft-banner"
+        style="position:fixed; top:0; left:0; width:100%; background:#f97316; color:white; text-align:center; padding:12px; font-weight:800; font-size:1rem; z-index:2001; display:none; box-shadow:0 4px 15px rgba(249, 115, 22, 0.4); animation: slideDown 0.5s ease-out, theft-blink 0.8s infinite;">
+        <i class="fas fa-hand-fist"></i> THEFT ALERT: BIKE IS MOVING!
+        <a href="tel:112" style="margin-left: 15px;"><button
+                style="background:white; color:#c2410c; border:none; padding:4px 12px; border-radius:6px; font-weight:700; cursor:pointer;">CALL
+                SOS</button></a>
+        <button onclick="silenceAlarm()"
+            style="background:rgba(255,255,255,0.2); color:white; border:1px solid white; padding:4px 12px; border-radius:6px; margin-left:10px; font-weight:700; cursor:pointer;">DISMISS</button>
+    </div>
+
+    <div id="audio-prompt"
+        style="position:fixed; bottom:20px; right:20px; background:var(--glass); backdrop-filter:blur(10px); padding:15px; border-radius:15px; border:1px solid var(--glass-border); z-index:3000; color:white; display:flex; align-items:center; gap:10px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <i class="fas fa-volume-high"></i>
+        <span style="font-size:0.8rem;">Enable Audio Alerts?</span>
+        <button onclick="enableAudio()"
+            style="background:var(--primary); color:white; border:none; padding:5px 12px; border-radius:8px; font-weight:600; cursor:pointer;">YES</button>
+    </div>
+
+    <style>
+        @keyframes theft-blink {
+            0% {
+                background: #f97316;
+            }
+
+            50% {
+                background: #ea580c;
+            }
+
+            100% {
+                background: #f97316;
+            }
+        }
+    </style>
+
+    <div class="glass-panel">
+        <div class="header">
+            <div class="brand">PHANTOM</div>
+            <div class="live-tag">
+                <div class="pulse"></div> LIVE
             </div>
         </div>
 
         <div class="stat-grid">
-            <div class="stat-item">
-                <div class="icon-box"><i class="fas fa-gauge-high"></i></div>
+            <!-- Status Info -->
+            <div class="stat-item"
+                style="border-bottom:1px solid var(--glass-border); padding-bottom:15px; margin-bottom:10px;">
+                <div id="status-pulse" class="live-pulse"></div>
                 <div class="stat-content">
-                    <div class="label">Speed</div>
-                    <div id="speed" class="value">0 <span style="font-size:0.7rem; font-weight:400;">km/h</span></div>
+                    <div class="label" id="rider-label">System Active</div>
+                    <div id="ride-status" class="value" style="color:var(--success);">LIVE TRACKING</div>
                 </div>
             </div>
-            
+
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="icon-box"><i class="fas fa-gauge-high"></i></div>
+                    <div class="stat-content">
+                        <div class="label">Speed</div>
+                        <div id="speed" class="value">0 <span style="font-size:0.7rem; font-weight:400;">km/h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="icon-box"><i class="fas fa-arrows-up-down-left-right"></i></div>
+                    <div class="stat-content">
+                        <div class="label">Distance</div>
+                        <div id="dist-ui" class="value">---</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location -->
             <div class="stat-item">
-                <div class="icon-box"><i class="fas fa-arrows-up-down-left-right"></i></div>
+                <div class="icon-box"><i class="fas fa-location-dot"></i></div>
                 <div class="stat-content">
-                    <div class="label">Distance</div>
-                    <div id="dist-ui" class="value">---</div>
+                    <div class="label">Last Known Address</div>
+                    <div id="address" class="value">---</div>
+                </div>
+            </div>
+
+            <!-- Remote Ride Control -->
+            <div class="stat-item"
+                style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:12px;">
+                <div id="remote-idle-controls" style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                    <button class="btn"
+                        style="background:linear-gradient(135deg, var(--primary), #6b21a8); color:white; border:none; padding:15px; border-radius:15px; font-weight:800; width:100%; cursor:pointer; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); border:1px solid rgba(255,255,255,0.1);"
+                        onclick="remoteCommand('START')">
+                        <i class="fas fa-bolt"></i> INITIATE MISSION
+                    </button>
+                </div>
+
+                <div id="remote-riding-controls" style="display:none; flex-direction:column; gap:10px; width:100%;">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn"
+                            style="flex:1; background:var(--accent); color:#000; border:none; padding:12px; border-radius:12px; font-weight:800; cursor:pointer;"
+                            onclick="remoteCommand('PARK_LOCK')">
+                            <i class="fas fa-lock"></i> PARK & LOCK
+                        </button>
+                        <button class="btn"
+                            style="flex:1; background:#25d366; color:white; border:none; padding:12px; border-radius:12px; font-weight:800; cursor:pointer;"
+                            onclick="remoteParkNotify()">
+                            <i class="fab fa-whatsapp"></i> NOTIFY & PARK
+                        </button>
+                    </div>
+                    <button class="btn"
+                        style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; padding:8px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;"
+                        onclick="remoteCommand('STOP')">
+                        <i class="fas fa-circle-stop"></i> EMERGENCY ABORT
+                    </button>
+                </div>
+
+                <div id="remote-parked-controls" style="display:none; flex-direction:column; gap:10px; width:100%;">
+                    <button class="btn"
+                        style="background:linear-gradient(135deg, var(--accent), #d97706); color:#000; border:none; padding:18px; border-radius:15px; font-weight:900; width:100%; cursor:pointer; box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);"
+                        onclick="remoteCommand('UNLOCK')">
+                        <i class="fas fa-unlock"></i> RE-ACTIVATE PHANTOM
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Missions -->
+            <div class="stat-item"
+                style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:10px;">
+                <div class="label" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class="fas fa-history"></i> Recent Missions</span>
+                    <span id="mission-count"
+                        style="font-size:0.6rem; background:var(--primary); color:white; padding:2px 8px; border-radius:10px;">0</span>
+                </div>
+                <div id="mission-list"
+                    style="display:flex; flex-direction:column; max-height:160px; overflow-y:auto; padding-right:5px; width:100%;">
+                    <div style="font-size:0.7rem; color:#64748b; text-align:center; padding:20px;">Retrieving mission
+                        logs...</div>
+                </div>
+            </div>
+
+            <!-- Anti-theft Toggle -->
+            <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:10px; margin-top:5px;">
+                <div class="icon-box" id="lock-icon-box"><i class="fas fa-lock-open"></i></div>
+                <div class="stat-content">
+                    <div class="label">Anti-Theft Lock</div>
+                    <button id="lock-btn"
+                        style="background:var(--glass-border); border:1px solid var(--primary); color:var(--primary); padding:6px 15px; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; width:100%;">LOCK
+                        BIKE</button>
                 </div>
             </div>
         </div>
 
-        <!-- Location -->
-        <div class="stat-item">
-            <div class="icon-box"><i class="fas fa-location-dot"></i></div>
-            <div class="stat-content">
-                <div class="label">Last Known Address</div>
-                <div id="address" class="value">---</div>
-            </div>
-        </div>
+        <div id="sync-time">Last update: Waiting...</div>
 
-        <!-- Remote Ride Control -->
-        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:12px;">
-            <div id="remote-idle-controls" style="display:flex; flex-direction:column; gap:10px; width:100%;">
-                <button class="btn" style="background:linear-gradient(135deg, var(--primary), #6b21a8); color:white; border:none; padding:15px; border-radius:15px; font-weight:800; width:100%; cursor:pointer; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); border:1px solid rgba(255,255,255,0.1);" onclick="remoteCommand('START')">
-                    <i class="fas fa-bolt"></i> INITIATE MISSION
-                </button>
-            </div>
-            
-            <div id="remote-riding-controls" style="display:none; flex-direction:column; gap:10px; width:100%;">
-                <div style="display:flex; gap:10px;">
-                    <button class="btn" style="flex:1; background:var(--accent); color:#000; border:none; padding:12px; border-radius:12px; font-weight:800; cursor:pointer;" onclick="remoteCommand('PARK_LOCK')">
-                        <i class="fas fa-lock"></i> PARK & LOCK
-                    </button>
-                    <button class="btn" style="flex:1; background:#25d366; color:white; border:none; padding:12px; border-radius:12px; font-weight:800; cursor:pointer;" onclick="remoteParkNotify()">
-                        <i class="fab fa-whatsapp"></i> NOTIFY & PARK
-                    </button>
-                </div>
-                <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; padding:8px; border-radius:10px; font-weight:700; width:100%; cursor:pointer;" onclick="remoteCommand('STOP')">
-                    <i class="fas fa-circle-stop"></i> EMERGENCY ABORT
-                </button>
-            </div>
-
-            <div id="remote-parked-controls" style="display:none; flex-direction:column; gap:10px; width:100%;">
-                <button class="btn" style="background:linear-gradient(135deg, var(--accent), #d97706); color:#000; border:none; padding:18px; border-radius:15px; font-weight:900; width:100%; cursor:pointer; box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);" onclick="remoteCommand('UNLOCK')">
-                    <i class="fas fa-unlock"></i> RE-ACTIVATE PHANTOM
-                </button>
-            </div>
+        <div id="debug-info">
+            <div>Bike: <span id="bike-latlng">---</span></div>
+            <div>You: <span id="user-latlng">---</span> (±<span id="user-acc">0</span>m)</div>
         </div>
-
-        <!-- Recent Missions -->
-        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:15px; margin-top:5px; flex-direction:column; gap:10px;">
-            <div class="label" style="display:flex; justify-content:space-between; align-items:center;">
-                <span><i class="fas fa-history"></i> Recent Missions</span>
-                <span id="mission-count" style="font-size:0.6rem; background:var(--primary); color:white; padding:2px 8px; border-radius:10px;">0</span>
-            </div>
-            <div id="mission-list" style="display:flex; flex-direction:column; max-height:160px; overflow-y:auto; padding-right:5px; width:100%;">
-                <div style="font-size:0.7rem; color:#64748b; text-align:center; padding:20px;">Retrieving mission logs...</div>
-            </div>
-        </div>
-
-        <!-- Anti-theft Toggle -->
-        <div class="stat-item" style="border-top:1px solid var(--glass-border); padding-top:10px; margin-top:5px;">
-            <div class="icon-box" id="lock-icon-box"><i class="fas fa-lock-open"></i></div>
-            <div class="stat-content">
-                <div class="label">Anti-Theft Lock</div>
-                <button id="lock-btn" style="background:var(--glass-border); border:1px solid var(--primary); color:var(--primary); padding:6px 15px; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; width:100%;">LOCK BIKE</button>
-            </div>
-        </div>
+        <button onclick="toggleDebug()"
+            style="background:none; border:none; color:#475569; font-size:0.5rem; cursor:pointer; margin-top:10px; width:100%; text-align:right;">[DEBUG
+            VIEW]</button>
     </div>
 
-    <div id="sync-time">Last update: Waiting...</div>
+    <div id="map"></div>
 
-    <div id="debug-info">
-        <div>Bike: <span id="bike-latlng">---</span></div>
-        <div>You: <span id="user-latlng">---</span> (±<span id="user-acc">0</span>m)</div>
-    </div>
-    <button onclick="toggleDebug()" style="background:none; border:none; color:#475569; font-size:0.5rem; cursor:pointer; margin-top:10px; width:100%; text-align:right;">[DEBUG VIEW]</button>
-</div>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<div id="map"></div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
+            authDomain: "phantom-raiders.firebaseapp.com",
+            databaseURL: "https://phantom-raiders-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "phantom-raiders",
+            storageBucket: "phantom-raiders.firebasestorage.app",
+            messagingSenderId: "1055222458613",
+            appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
+            measurementId: "G-3GX5D8RDMW"
+        };
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCx75fIPlI9Ezn9S6l8vZnsi1qDlP6nuoo",
-        authDomain: "phantom-raiders.firebaseapp.com",
-        databaseURL: "https://phantom-raiders-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "phantom-raiders",
-        storageBucket: "phantom-raiders.firebasestorage.app",
-        messagingSenderId: "1055222458613",
-        appId: "1:1055222458613:web:75d48960bbb72a3ff7bdbc",
-        measurementId: "G-3GX5D8RDMW"
-    };
+        // Initial Map Setup
+        const map = L.map('map', { zoomControl: false }).setView([13.0827, 80.2707], 13);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+        // Dark Map Style (CartoDB Dark Matter)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap © CARTO'
+        }).addTo(map);
 
-    // Initial Map Setup
-    const map = L.map('map', { zoomControl: false }).setView([13.0827, 80.2707], 13);
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    // Dark Map Style (CartoDB Dark Matter)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap © CARTO'
-    }).addTo(map);
-
-    // Custom BIKE Icon (SVG Path)
-    const bikeIcon = L.divIcon({
-        className: 'custom-bike-icon',
-        html: `<div style="filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))">
+        // Custom BIKE Icon (SVG Path)
+        const bikeIcon = L.divIcon({
+            className: 'custom-bike-icon',
+            html: `<div style="filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))">
                 <svg viewBox="0 0 512 512" width="40" height="40">
                     <path class="bike-path" fill="#3b82f6" d="M416 96c26.5 0 48-21.5 48-48S442.5 0 416 0s-48 21.5-48 48 21.5 48 48 48zm-80 64c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zm-128 0c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32s32-14.3 32-32V192c0-17.7-14.3-32-32-32zM96 96c26.5 0 48-21.5 48-48S122.5 0 96 0 48 21.5 48 48s21.5 48 48 48zm400 352H16c-8.8 0-16 7.2-16 16s7.2 16 16 16h480c8.8 0 16-7.2 16-16s-7.2-16-16-16zm-336-64V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32zm256 0V128c0-17.7-14.3-32-32-32s-32 14.3-32 32v256c0 17.7 14.3 32 32 32s32-14.3 32-32z"/>
                     <path class="bike-path" fill="#3b82f6" d="M376.1 144H135.9c-13.3 0-25.5 8.1-30.8 20.2l-64 144C34.6 323.2 41.5 336 53.3 336H458.7c11.8 0 18.7-12.8 12.3-27.8l-64-144c-5.3-12.1-17.5-20.2-30.9-20.2z"/>
                 </svg>
                </div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20]
-    });
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
 
-    const marker = L.marker([0, 0], { icon: bikeIcon }).addTo(map);
-    const route = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.6 }).addTo(map);
+        const marker = L.marker([0, 0], { icon: bikeIcon }).addTo(map);
+        const route = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.6 }).addTo(map);
 
-    const speedEl = document.getElementById("speed");
-    const distanceEl = document.getElementById("dist-ui"); // Changed ID
-    const timeEl = document.getElementById("sync-time");
+        const speedEl = document.getElementById("speed");
+        const distanceEl = document.getElementById("dist-ui"); // Changed ID
+        const timeEl = document.getElementById("sync-time");
 
-    let firstLoad = true;
-    let bikePos = null;
-    let userPos = null;
-    let userAccuracy = 9999;
+        let firstLoad = true;
+        let bikePos = null;
+        let userPos = null;
+        let userAccuracy = 9999;
 
-    function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; 
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
 
-    function updateDistanceUI() {
-        if (bikePos && userPos) {
-            if (userAccuracy > 500) {
-                document.getElementById("dist-ui").closest(".stat-item").style.display = "none"; // Adjusted to new structure
+        function updateDistanceUI() {
+            if (bikePos && userPos) {
+                if (userAccuracy > 500) {
+                    document.getElementById("dist-ui").closest(".stat-item").style.display = "none"; // Adjusted to new structure
+                    return;
+                }
+                document.getElementById("dist-ui").closest(".stat-item").style.display = "flex"; // Adjusted to new structure
+
+                const dist = getDistance(userPos.lat, userPos.lng, bikePos.lat, bikePos.lng);
+                distanceEl.innerText = dist < 1 ? Math.round(dist * 1000) + " m" : dist.toFixed(2) + " km";
+            }
+        }
+
+        window.toggleDebug = function () {
+            const el = document.getElementById("debug-info");
+            el.style.display = el.style.display === "none" ? "block" : "none";
+        }
+
+        // High Accuracy Tracking
+        navigator.geolocation.watchPosition((pos) => {
+            userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            userAccuracy = pos.coords.accuracy;
+            document.getElementById("user-latlng").innerText = userPos.lat.toFixed(4) + "," + userPos.lng.toFixed(4);
+            document.getElementById("user-acc").innerText = Math.round(pos.coords.accuracy);
+            updateDistanceUI();
+        }, null, { enableHighAccuracy: true });
+
+        // Anti-theft Controls
+        const lockBtn = document.getElementById("lock-btn");
+        const lockIconBox = document.getElementById("lock-icon-box");
+        let isLocked = false;
+
+        lockBtn.onclick = () => {
+            const nextState = !isLocked;
+            set(ref(db, "bike/locked"), nextState);
+            if (!nextState) set(ref(db, "bike/theft"), false); // Reset theft if unlocking
+        };
+
+        window.silenceAlarm = () => {
+            set(ref(db, "bike/theft"), false);
+        };
+
+        window.silenceEmergency = () => {
+            set(ref(db, "bike/emergency"), false);
+        };
+
+        // Audio Siren for Dashboard
+        let audioCtx = null;
+        let alarmInterval = null;
+
+        window.enableAudio = () => {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById("audio-prompt").style.display = "none";
+        };
+
+        function startSiren() {
+            if (alarmInterval || !audioCtx) return;
+            alarmInterval = setInterval(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            }, 500);
+        }
+
+        function stopSiren() {
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+        }
+
+        // --- Remote Commands ---
+        let currentBikeData = {};
+        window.remoteCommand = (cmd) => {
+            set(ref(db, "bike/remote_command"), cmd);
+        };
+
+        window.remoteParkNotify = () => {
+            remoteCommand('PARK_LOCK');
+            const { lat, lng, address, rider } = currentBikeData;
+            const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            const msg = `📍 REMOTE PARKED: ${rider || 'Raider'}\nLocation: ${address || 'Unknown'}\nMaps: ${mapUrl}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
+        onValue(ref(db, "bike"), (snap) => {
+            const d = snap.val();
+            if (!d) return;
+            currentBikeData = d;
+
+            // 1. Update Remote Tool Visibility
+            const idleCtrl = document.getElementById("remote-idle-controls");
+            const rideCtrl = document.getElementById("remote-riding-controls");
+            const parkCtrl = document.getElementById("remote-parked-controls");
+
+            if (idleCtrl && rideCtrl && parkCtrl) {
+                if (d.isParked) {
+                    idleCtrl.style.display = "none";
+                    rideCtrl.style.display = "none";
+                    parkCtrl.style.display = "flex";
+                } else if (d.isRiding) {
+                    idleCtrl.style.display = "none";
+                    rideCtrl.style.display = "flex";
+                    parkCtrl.style.display = "none";
+                } else {
+                    idleCtrl.style.display = "flex";
+                    rideCtrl.style.display = "none";
+                    parkCtrl.style.display = "none";
+                }
+            }
+
+            // 2. Update Locked State
+            isLocked = d.locked === true;
+            if (isLocked) {
+                lockBtn.innerText = "UNLOCK PHANTOM";
+                lockBtn.style.background = "var(--glass-border)";
+                lockBtn.style.color = "var(--accent)";
+                lockBtn.style.border = "1px solid var(--accent)";
+                lockIconBox.innerHTML = '<i class="fas fa-lock"></i>';
+                lockIconBox.style.color = "var(--accent)";
+            } else {
+                lockBtn.innerText = "LOCK PHANTOM";
+                lockBtn.style.background = "var(--glass-border)";
+                lockBtn.style.color = "var(--primary)";
+                lockBtn.style.border = "1px solid var(--primary)";
+                lockIconBox.innerHTML = '<i class="fas fa-lock-open"></i>';
+                lockIconBox.style.color = "#94a3b8";
+            }
+
+            // 3. Theft & Emergency Banners
+            const theftBanner = document.getElementById("theft-banner");
+            const emergencyBanner = document.getElementById("emergency-banner");
+            const paths = document.querySelectorAll('.bike-path');
+
+            if (d.theft === true) {
+                theftBanner.style.display = "block";
+                startSiren();
+            } else if (d.emergency === true) {
+                emergencyBanner.style.display = "block";
+                startSiren();
+                paths.forEach(p => p.setAttribute('fill', '#ef4444'));
+            } else {
+                theftBanner.style.display = "none";
+                emergencyBanner.style.display = "none";
+                stopSiren();
+                paths.forEach(p => p.setAttribute('fill', 'var(--primary)'));
+            }
+
+            // 4. Map & Stats
+            if (d.lat && d.lng) {
+                bikePos = { lat: d.lat, lng: d.lng };
+                const pos = [d.lat, d.lng];
+                marker.setLatLng(pos);
+
+                if (firstLoad) {
+                    map.setView(pos, 16);
+                    firstLoad = false;
+                } else {
+                    map.panTo(pos);
+                }
+
+                // Route Log
+                const latlngs = route.getLatLngs();
+                const last = latlngs.length > 0 ? latlngs[latlngs.length - 1] : null;
+                if (!last || getDistance(last.lat, last.lng, d.lat, d.lng) > 0.005) {
+                    route.addLatLng(pos);
+                }
+
+                document.getElementById("bike-latlng").innerText = (d.lat && d.lng) ? d.lat.toFixed(4) + "," + d.lng.toFixed(4) : "---";
+            }
+
+            if (d.rider) document.getElementById("rider-label").innerText = "Rider: " + d.rider;
+
+            const rideStatus = document.getElementById("ride-status");
+            const pulse = document.getElementById("status-pulse");
+            if (d.isParked) {
+                rideStatus.innerText = "PARKED";
+                rideStatus.style.color = "var(--accent)";
+                pulse.style.background = "var(--accent)";
+                pulse.style.animation = "none";
+            } else if (d.isRiding) {
+                rideStatus.innerText = "LIVE TRACKING";
+                rideStatus.style.color = "var(--primary)";
+                pulse.style.background = "var(--primary)";
+                pulse.style.animation = "pulse 2s infinite";
+            } else {
+                rideStatus.innerText = "OFFLINE";
+                rideStatus.style.color = "#64748b";
+                pulse.style.background = "#64748b";
+                pulse.style.animation = "none";
+            }
+
+            speedEl.innerText = Math.round(d.speed || 0) + " km/h";
+            if (d.time) {
+                timeEl.innerText = "Last sync: " + new Date(d.time).toLocaleTimeString();
+            }
+            if (d.address) document.getElementById("address").innerText = d.address;
+
+            updateDistanceUI();
+        });
+
+        // --- MISSION LOG LISTENER ---
+        onValue(ref(db, "bike/trips"), (snap) => {
+            const trips = snap.val();
+            const list = document.getElementById("mission-list");
+            const count = document.getElementById("mission-count");
+
+            if (!trips) {
+                list.innerHTML = '<div style="font-size:0.7rem; color:#64748b; text-align:center; padding:20px;">No recent missions found.</div>';
+                count.innerText = "0";
                 return;
             }
-            document.getElementById("dist-ui").closest(".stat-item").style.display = "flex"; // Adjusted to new structure
 
-            const dist = getDistance(userPos.lat, userPos.lng, bikePos.lat, bikePos.lng);
-            distanceEl.innerText = dist < 1 ? Math.round(dist * 1000) + " m" : dist.toFixed(2) + " km";
-        }
-    }
-
-    window.toggleDebug = function() {
-        const el = document.getElementById("debug-info");
-        el.style.display = el.style.display === "none" ? "block" : "none";
-    }
-
-    // High Accuracy Tracking
-    navigator.geolocation.watchPosition((pos) => {
-        userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        userAccuracy = pos.coords.accuracy;
-        document.getElementById("user-latlng").innerText = userPos.lat.toFixed(4) + "," + userPos.lng.toFixed(4);
-        document.getElementById("user-acc").innerText = Math.round(pos.coords.accuracy);
-        updateDistanceUI();
-    }, null, { enableHighAccuracy: true });
-
-    // Anti-theft Controls
-    const lockBtn = document.getElementById("lock-btn");
-    const lockIconBox = document.getElementById("lock-icon-box");
-    let isLocked = false;
-
-    lockBtn.onclick = () => {
-        const nextState = !isLocked;
-        set(ref(db, "bike/locked"), nextState);
-        if (!nextState) set(ref(db, "bike/theft"), false); // Reset theft if unlocking
-    };
-
-    window.silenceAlarm = () => {
-        set(ref(db, "bike/theft"), false);
-    };
-
-    // Audio Siren for Dashboard
-    let audioCtx = null;
-    let alarmInterval = null;
-
-    window.enableAudio = () => {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        document.getElementById("audio-prompt").style.display = "none";
-    };
-
-    function startSiren() {
-        if (alarmInterval || !audioCtx) return;
-        alarmInterval = setInterval(() => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
-            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.4);
-        }, 500);
-    }
-
-    function stopSiren() {
-        if (alarmInterval) {
-            clearInterval(alarmInterval);
-            alarmInterval = null;
-        }
-    }
-
-    // --- Remote Commands ---
-    let currentBikeData = {};
-    window.remoteCommand = (cmd) => {
-        set(ref(db, "bike/remote_command"), cmd);
-    };
-
-    window.remoteParkNotify = () => {
-        remoteCommand('PARK_LOCK');
-        const { lat, lng, address, rider } = currentBikeData;
-        const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-        const msg = `📍 REMOTE PARKED: ${rider || 'Raider'}\nLocation: ${address || 'Unknown'}\nMaps: ${mapUrl}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    };
-
-    onValue(ref(db, "bike"), (snap) => {
-        const d = snap.val();
-        if (!d) return;
-        currentBikeData = d;
-
-        // 1. Update Remote Tool Visibility
-        const idleCtrl = document.getElementById("remote-idle-controls");
-        const rideCtrl = document.getElementById("remote-riding-controls");
-        const parkCtrl = document.getElementById("remote-parked-controls");
-
-        if (idleCtrl && rideCtrl && parkCtrl) {
-            if (d.isParked) {
-                idleCtrl.style.display = "none";
-                rideCtrl.style.display = "none";
-                parkCtrl.style.display = "flex";
-            } else if (d.isRiding) {
-                idleCtrl.style.display = "none";
-                rideCtrl.style.display = "flex";
-                parkCtrl.style.display = "none";
-            } else {
-                idleCtrl.style.display = "flex";
-                rideCtrl.style.display = "none";
-                parkCtrl.style.display = "none";
-            }
-        }
-
-        // 2. Update Locked State
-        isLocked = d.locked === true;
-        if (isLocked) {
-            lockBtn.innerText = "UNLOCK PHANTOM";
-            lockBtn.style.background = "var(--glass-border)";
-            lockBtn.style.color = "var(--accent)";
-            lockBtn.style.border = "1px solid var(--accent)";
-            lockIconBox.innerHTML = '<i class="fas fa-lock"></i>';
-            lockIconBox.style.color = "var(--accent)";
-        } else {
-            lockBtn.innerText = "LOCK PHANTOM";
-            lockBtn.style.background = "var(--glass-border)";
-            lockBtn.style.color = "var(--primary)";
-            lockBtn.style.border = "1px solid var(--primary)";
-            lockIconBox.innerHTML = '<i class="fas fa-lock-open"></i>';
-            lockIconBox.style.color = "#94a3b8";
-        }
-
-        // 3. Theft & Emergency Banners
-        const theftBanner = document.getElementById("theft-banner");
-        const emergencyBanner = document.getElementById("emergency-banner");
-        const paths = document.querySelectorAll('.bike-path');
-
-        if (d.theft === true) {
-            theftBanner.style.display = "block";
-            startSiren();
-        } else if (d.emergency === true) {
-            emergencyBanner.style.display = "block";
-            startSiren();
-            paths.forEach(p => p.setAttribute('fill', '#ef4444'));
-        } else {
-            theftBanner.style.display = "none";
-            emergencyBanner.style.display = "none";
-            stopSiren();
-            paths.forEach(p => p.setAttribute('fill', 'var(--primary)'));
-        }
-
-        // 4. Map & Stats
-        if (d.lat && d.lng) {
-            bikePos = { lat: d.lat, lng: d.lng };
-            const pos = [d.lat, d.lng];
-            marker.setLatLng(pos);
-            
-            if (firstLoad) {
-                map.setView(pos, 16);
-                firstLoad = false;
-            } else {
-                map.panTo(pos);
-            }
-
-            // Route Log
-            const latlngs = route.getLatLngs();
-            const last = latlngs.length > 0 ? latlngs[latlngs.length - 1] : null;
-            if (!last || getDistance(last.lat, last.lng, d.lat, d.lng) > 0.005) {
-                route.addLatLng(pos);
-            }
-            
-            document.getElementById("bike-latlng").innerText = (d.lat && d.lng) ? d.lat.toFixed(4) + "," + d.lng.toFixed(4) : "---";
-        }
-
-        if (d.rider) document.getElementById("rider-label").innerText = "Rider: " + d.rider;
-        
-        const rideStatus = document.getElementById("ride-status");
-        const pulse = document.getElementById("status-pulse");
-        if (d.isParked) {
-            rideStatus.innerText = "PARKED";
-            rideStatus.style.color = "var(--accent)";
-            pulse.style.background = "var(--accent)";
-            pulse.style.animation = "none";
-        } else if (d.isRiding) {
-            rideStatus.innerText = "LIVE TRACKING";
-            rideStatus.style.color = "var(--primary)";
-            pulse.style.background = "var(--primary)";
-            pulse.style.animation = "pulse 2s infinite";
-        } else {
-            rideStatus.innerText = "OFFLINE";
-            rideStatus.style.color = "#64748b";
-            pulse.style.background = "#64748b";
-            pulse.style.animation = "none";
-        }
-
-        speedEl.innerText = Math.round(d.speed || 0) + " km/h";
-        if (d.time) {
-            timeEl.innerText = "Last sync: " + new Date(d.time).toLocaleTimeString();
-        }
-        if (d.address) document.getElementById("address").innerText = d.address;
-        
-        updateDistanceUI();
-    });
-
-    // --- MISSION LOG LISTENER ---
-    onValue(ref(db, "bike/trips"), (snap) => {
-        const trips = snap.val();
-        const list = document.getElementById("mission-list");
-        const count = document.getElementById("mission-count");
-        
-        if (!trips) {
-            list.innerHTML = '<div style="font-size:0.7rem; color:#64748b; text-align:center; padding:20px;">No recent missions found.</div>';
-            count.innerText = "0";
-            return;
-        }
-
-        const tripArray = Object.values(trips).sort((a, b) => b.time - a.time).slice(0, 5);
-        count.innerText = tripArray.length;
-        list.innerHTML = tripArray.map(t => `
+            const tripArray = Object.values(trips).sort((a, b) => b.time - a.time).slice(0, 5);
+            count.innerText = tripArray.length;
+            list.innerHTML = tripArray.map(t => `
             <div class="mission-card">
                 <div style="display:flex; flex-direction:column; gap:2px;">
                     <div style="font-size:0.75rem; font-weight:600; color:white;">${new Date(t.time).toLocaleDateString()}</div>
-                    <div style="font-size:0.65rem; color:#94a3b8;">${new Date(t.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    <div style="font-size:0.65rem; color:#94a3b8;">${new Date(t.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:0.8rem; font-weight:700; color:var(--accent);">${t.dist || '---'}</div>
@@ -644,8 +745,9 @@
                 </div>
             </div>
         `).join('');
-    });
+        });
 
-</script>
+    </script>
 </body>
+
 </html>

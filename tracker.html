@@ -485,7 +485,7 @@
         const acc = event.acceleration;
         if (acc && acc.x !== null) {
             const mag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
-            if (mag > 25) triggerCrashAlert();
+            if (mag > 35) triggerCrashAlert();
         }
     }
 
@@ -503,6 +503,7 @@
     window.cancelCrashAlert = () => {
         clearInterval(crashTimer); crashTimer = null;
         document.getElementById("crash-overlay").style.display = "none";
+        set(ref(db, "bike/emergency"), false);
     };
 
     function sendEmergency() {
@@ -541,6 +542,15 @@
         if (isTheftAlert) { startSiren(); document.body.style.background = "#450a0a"; }
         else { stopSiren(); document.body.style.background = "var(--bg)"; }
         document.getElementById("log-panel").style.background = isTheftAlert ? "#ef4444" : "rgba(255,255,255,0.05)";
+    });
+
+    onValue(ref(db, "bike/emergency"), (s) => {
+        if (s.val() === true) {
+            document.getElementById("crash-overlay").style.display = "flex";
+        } else {
+            document.getElementById("crash-overlay").style.display = "none";
+            if (crashTimer) { clearInterval(crashTimer); crashTimer = null; }
+        }
     });
 
     onValue(ref(db, "bike/remote_command"), (s) => {
