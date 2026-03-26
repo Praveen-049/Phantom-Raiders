@@ -491,12 +491,19 @@
 
     function triggerCrashAlert() {
         if (crashTimer) return;
-        document.getElementById("crash-overlay").style.display = "flex";
+        set(ref(db, "bike/emergency"), true);
+        document.getElementById("countdown").innerText = "10";
         let c = 10;
         crashTimer = setInterval(() => {
             c--;
-            document.getElementById("countdown").innerText = c;
-            if (c <= 0) { sendEmergency(); cancelCrashAlert(); }
+            if (c > 0) {
+                document.getElementById("countdown").innerText = c;
+            } else {
+                sendEmergency();
+                clearInterval(crashTimer);
+                crashTimer = null;
+                document.getElementById("countdown").innerText = "SENT";
+            }
         }, 1000);
     }
 
